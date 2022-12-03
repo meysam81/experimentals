@@ -1,8 +1,7 @@
 PROTOS := $(shell find proto -name '*.proto')
-GOLANG_FILES := $(shell find . -name '*.go')
 PWD := $(shell pwd)
-PYTHONPATH := $(PWD)/server/python/:$(PWD)/server/python/proto_files:$(PWD)/client/python/:$(PWD)/client/python/proto_files
-export PYTHONPATH
+PYTHONPATH_SERVER := $(PWD)/server/python/:$(PWD)/server/python/proto_files
+PYTHONPATH_CLIENT := $(PWD)/client/python/:$(PWD)/client/python/proto_files
 
 protoc-go:
 	protoc \
@@ -23,12 +22,14 @@ protoc-python:
 		--grpc_python_out=./client/python/proto_files \
 		$(PROTOS)
 
+run-server-python: export PYTHONPATH = $(PYTHONPATH_SERVER)
 run-server-python:
 	watchmedo auto-restart -d $(PWD) -p "*.py" -R -- python ./server/python/main.py
 
 run-server-golang:
 	cd ./server/golang && go run app/main.go
 
+run-client-python: export PYTHONPATH = $(PYTHONPATH_CLIENT)
 run-client-python:
 	python ./client/python/main.py
 
