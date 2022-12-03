@@ -1,7 +1,7 @@
 import grpc
 from app.config import config
-from proto_files import greetings_pb2, greetings_pb2_grpc
 from app.logger import get_logger
+from proto_files import greetings_pb2, greetings_pb2_grpc
 
 logger = get_logger(__name__)
 
