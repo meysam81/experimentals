@@ -17,6 +17,7 @@ jobs:
           format: sarif
           scan-type: fs
           output: trivy-results.sarif
+          scan-ref: "."
           # vuln-type: os,library
       - if: always()
         name: Upload Trivy scan results
