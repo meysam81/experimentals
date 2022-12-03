@@ -1,0 +1,25 @@
+name: trivy-scan
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  scan-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          format: sarif
+          scan-type: fs
+          output: trivy-results.sarif
+          # vuln-type: os,library
+      - if: always()
+        name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-results.sarif
