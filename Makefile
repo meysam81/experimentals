@@ -22,19 +22,33 @@ protoc-python:
 		--grpc_python_out=./client/python/proto_files \
 		$(PROTOS)
 
+build-golang-client:
+	cd ./client/golang && go build -o client.out ./app/
+
+build-golang-server:
+	cd ./server/golang && go build -o server.out ./app/
+
+build-golang: build-golang-client build-golang-server
+
+run-supervisor: build-golang
+	supervisord -c ./supervisord/supervisord.conf
+
+reload-supervisord: build-golang
+	supervisorctl -c ./supervisord/supervisord.conf reload
+
 run-server-python: export PYTHONPATH = $(PYTHONPATH_SERVER)
 run-server-python:
 	watchmedo auto-restart -d $(PWD) -p "*.py" -R -- python ./server/python/main.py
 
-run-server-golang:
-	cd ./server/golang && go run app/main.go
+run-server-golang: build-golang-server
+	./server/golang/server.out
 
 run-client-python: export PYTHONPATH = $(PYTHONPATH_CLIENT)
 run-client-python:
 	python ./client/python/main.py
 
-run-client-golang:
-	cd ./client/golang/ && go run ./app/main.go
+run-client-golang: build-golang-client
+	./client/golang/client.out
 
 install-requirements-python-client:
 	pip install -r ./client/python/requirements.txt

@@ -1,4 +1,5 @@
 from app.logger import get_logger
+from app.config import config
 
 logger = get_logger(__name__)
 
@@ -7,4 +8,4 @@ if __name__ == "__main__":
 
     from app.client import run
 
-    run()
+    run(infinite=config.INFINITE)

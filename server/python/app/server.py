@@ -14,12 +14,16 @@ class Greeter(greetings_pb2_grpc.GreeterServicer):
         return greetings_pb2.HelloReply(message="Hello %s" % request.name)
 
 
-def serve():
+def serve(interceptors=None):
     port = config.PORT
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=config.THREAD_POOL))
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=config.THREAD_POOL),
+        interceptors=interceptors,
+    )
     greetings_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
 
     server.add_insecure_port("[::]:" + port)
+    logger.info("Starting server ...")
     server.start()
 
     logger.info("Server started, listening on " + port)

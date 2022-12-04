@@ -5,10 +5,16 @@ logger = get_logger(__name__)
 
 if __name__ == "__main__":
     try:
-        logger.info("Starting server ...")
+        from app.metrics import PromServerInterceptor
+        from app.metrics import serve as metrics
         from app.server import serve
 
-        serve()
+        metrics()
+        serve(
+            {
+                PromServerInterceptor(),
+            }
+        )
     except KeyboardInterrupt:
         print("Shutting down server ...")
         exit(0)
