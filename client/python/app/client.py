@@ -12,7 +12,6 @@ def do_run(channel, name):
     logger.info("Greeter client received: " + response.message)
 
 
-
 def run(infinite=None):
 
     server_addr = config.SERVER_ADDRESS
