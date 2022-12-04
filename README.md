@@ -19,6 +19,7 @@
 - [Protobuf Playground](#protobuf-playground)
   - [Introduction](#introduction)
   - [Pre-requisites](#pre-requisites)
+  - [Quick Start](#quick-start)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -53,3 +54,9 @@ required tools as described below.
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) [optional]
 
+## Quick Start
+
+```bash
+make install
+make run
+```
