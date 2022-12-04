@@ -12,11 +12,11 @@ def do_run(channel, name):
     logger.info("Greeter client received: " + response.message)
 
 
-def run(infinite=None):
+def run(infinite=None, interceptors=set()):
 
     server_addr = config.SERVER_ADDRESS
 
-    channel = grpc.insecure_channel(server_addr)
+    channel = grpc.intercept_channel(grpc.insecure_channel(server_addr), *interceptors)
     stub = greetings_pb2_grpc.GreeterStub(channel)
     if infinite:
         counter = 0

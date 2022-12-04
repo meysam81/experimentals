@@ -3,25 +3,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: prometheus
-    static_configs:
-      - targets:
-          - localhost:9090
-  - job_name: grpc-server
-    static_configs:
-      - targets:
-          - localhost:40050
-      - targets:
-          - localhost:40051
-      - targets:
-          - localhost:40060
-      - targets:
-          - localhost:40061
-  - job_name: haproxy-exporter
-    static_configs:
-      - targets:
-          - localhost:9101
-  - job_name: node-exporter
-    static_configs:
-      - targets:
-          - localhost:9100
+  - job_name: localhost
+    file_sd_configs:
+      - files:
+          - ./targets/*.yml

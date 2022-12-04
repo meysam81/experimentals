@@ -1,0 +1,12 @@
+- targets:
+    - localhost:40050
+    - localhost:40051
+  labels:
+    job: grpc-server
+    lang: python
+- targets:
+    - localhost:40060
+    - localhost:40061
+  labels:
+    job: grpc-server
+    lang: golang

@@ -1,0 +1,4 @@
+- targets:
+    - localhost:9101
+  labels:
+    job: haproxy-exporter

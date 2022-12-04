@@ -7,5 +7,7 @@ if __name__ == "__main__":
     logger.info("Starting client ...")
 
     from app.client import run
+    from app.metrics import serve as prometheus, PromClientInterceptor
 
-    run(infinite=config.INFINITE)
+    prometheus()
+    run(infinite=config.INFINITE, interceptors={PromClientInterceptor(),})

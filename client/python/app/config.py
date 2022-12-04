@@ -10,6 +10,7 @@ class Config:
     SERVER_PORT: str = os.getenv("SERVER_PORT", "50050")
     SERVER_ADDRESS: str = f"{SERVER_HOST}:{SERVER_PORT}"
     INFINITE: bool = os.getenv("INFINITE", "False").lower() in {"true", "1", "yes"}
+    METRICS_PORT: int = int(os.getenv("METRICS_PORT", f"20051"))
 
 
 config = Config()

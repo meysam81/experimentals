@@ -1,0 +1,27 @@
+- targets:
+    - localhost:20061
+    - localhost:20062
+    - localhost:20063
+    - localhost:20064
+    - localhost:20065
+    - localhost:20066
+    - localhost:20067
+    - localhost:20068
+    - localhost:20069
+  labels:
+    job: grpc-client
+    lang: golang
+
+- targets:
+    - localhost:20051
+    - localhost:20052
+    - localhost:20053
+    - localhost:20054
+    - localhost:20055
+    - localhost:20056
+    - localhost:20057
+    - localhost:20058
+    - localhost:20059
+  labels:
+    job: grpc-client
+    lang: python

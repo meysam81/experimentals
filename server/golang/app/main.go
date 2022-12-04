@@ -32,17 +32,18 @@ func init() {
 }
 
 func main() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	log.Println("Starting server ...")
+	lis, err := net.Listen("tcp4", fmt.Sprintf(":%s", port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("Server failed to listen: %v", err)
 	}
 	pb.RegisterGreeterServer(grpcServer, &server{})
-	log.Printf("prometheus listening at %v", metricsPort)
 	// start prometheus in background
 	go func() {
+		log.Printf("Prometheus listening on %v", metricsPort)
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), nil))
 	}()
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("Server started, listening on %v", lis.Addr())
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
