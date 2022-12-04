@@ -13,17 +13,15 @@ import (
 )
 
 var (
-	host       = getEnv("SERVER_HOST", "localhost")
-	port       = getEnv("SERVER_PORT", "50050")
-	addr       = fmt.Sprintf("%s:%s", host, port)
-	name       = getEnv("NAME", "world")
-	grpcClient *grpc.ClientConn
+	host     = getEnv("SERVER_HOST", "localhost")
+	port     = getEnv("SERVER_PORT", "50050")
+	addr     = fmt.Sprintf("%s:%s", host, port)
+	name     = getEnv("NAME", "world")
+	infinite = getEnv("INFINITE", "false")
 )
 
 func main() {
-	var err error
-	// Set up a connection to the server.
-	grpcClient, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClient, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -33,9 +31,27 @@ func main() {
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+	if infinite == "true" {
+		for i := 1; ; i++ {
+			// if deadline exceeded, reconnect to the server
+			if err := ctx.Err(); err != nil {
+				log.Printf("context deadline exceeded, reconnecting...: %v", err)
+				ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+			}
+
+			r, err := c.SayHello(ctx, &pb.HelloRequest{Name: fmt.Sprintf("%s-%d", name, i)})
+			if err != nil {
+				log.Printf("could not greet: %v", err)
+				continue
+			}
+			log.Printf("Greeting: %s", r.Message)
+		}
+
+	} else {
+		r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		log.Printf("Greeting: %s", r.Message)
 	}
-	log.Printf("Greeting: %s", r.GetMessage())
 }

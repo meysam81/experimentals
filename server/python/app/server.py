@@ -19,6 +19,7 @@ def serve(interceptors=None):
     server = grpc.server(
         futures.ThreadPoolExecutor(max_workers=config.THREAD_POOL),
         interceptors=interceptors,
+        options=(("grpc.enable_http_proxy", 0),),
     )
     greetings_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
 

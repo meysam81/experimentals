@@ -12,22 +12,33 @@ def do_run(channel, name):
     logger.info("Greeter client received: " + response.message)
 
 
-def run(infinite=None):
-
+def get_channel():
     server_addr = config.SERVER_ADDRESS
 
-    with grpc.insecure_channel(server_addr) as channel:
-        stub = greetings_pb2_grpc.GreeterStub(channel)
-        if infinite:
-            counter = 0
-            while True:
-                try:
-                    do_run(stub, f"{config.NAME}-{counter}")
-                    counter += 1
-                except KeyboardInterrupt:
-                    logger.info("Stopping client ...")
-                    break
-        else:
-            do_run(stub, config.NAME)
+    return grpc.insecure_channel(server_addr)
+
+
+def run(infinite=None):
+
+    channel = get_channel()
+    stub = greetings_pb2_grpc.GreeterStub(channel)
+    if infinite:
+        counter = 0
+        while True:
+            try:
+                do_run(stub, f"{config.NAME}-{counter}")
+                counter += 1
+            except KeyboardInterrupt:
+                logger.info("Stopping client ...")
+                break
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                logger.info("reconnecting...")
+                # try to reconnect, maybe a deadline has exceeded
+                channel = get_channel()
+                stub = greetings_pb2_grpc.GreeterStub(channel)
+    else:
+        do_run(stub, config.NAME)
 
     logger.info("Done.")
+    channel.close()
