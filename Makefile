@@ -33,8 +33,8 @@ build-golang: build-golang-client build-golang-server
 run-supervisor: build-golang
 	supervisord -c ./supervisord/supervisord.conf
 
-reload-supervisord: build-golang
-	supervisorctl -c ./supervisord/supervisord.conf reload
+update-supervisord: build-golang
+	supervisorctl -c ./supervisord/supervisord.conf update
 
 run-server-python: export PYTHONPATH = $(PYTHONPATH_SERVER)
 run-server-python:
