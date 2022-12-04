@@ -12,15 +12,12 @@ def do_run(channel, name):
     logger.info("Greeter client received: " + response.message)
 
 
-def get_channel():
-    server_addr = config.SERVER_ADDRESS
-
-    return grpc.insecure_channel(server_addr)
-
 
 def run(infinite=None):
 
-    channel = get_channel()
+    server_addr = config.SERVER_ADDRESS
+
+    channel = grpc.insecure_channel(server_addr)
     stub = greetings_pb2_grpc.GreeterStub(channel)
     if infinite:
         counter = 0
@@ -35,7 +32,6 @@ def run(infinite=None):
                 logger.error(f"Error: {e}")
                 logger.info("reconnecting...")
                 # try to reconnect, maybe a deadline has exceeded
-                channel = get_channel()
                 stub = greetings_pb2_grpc.GreeterStub(channel)
     else:
         do_run(stub, config.NAME)
