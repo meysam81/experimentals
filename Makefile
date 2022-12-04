@@ -39,20 +39,6 @@ update-supervisord:
 reload-supervisord: build-golang
 	supervisorctl -c ./supervisord/supervisord.conf reload
 
-run-server-python: export PYTHONPATH = $(PYTHONPATH_SERVER)
-run-server-python:
-	watchmedo auto-restart -d $(PWD) -p "*.py" -R -- python ./server/python/main.py
-
-run-server-golang: build-golang-server
-	./server/golang/server.out
-
-run-client-python: export PYTHONPATH = $(PYTHONPATH_CLIENT)
-run-client-python:
-	python ./client/python/main.py
-
-run-client-golang: build-golang-client
-	./client/golang/client.out
-
 install-requirements-python-client:
 	pip install -r ./client/python/requirements.txt
 
@@ -79,3 +65,11 @@ lint-golang-server:
 	cd ./server/golang && golangci-lint run
 
 lint-golang: lint-golang-client lint-golang-server
+
+lint: lint-python lint-golang
+
+run: run-supervisor
+
+install: install-requirements-python install-requirements-golang
+
+reload: reload-supervisord
