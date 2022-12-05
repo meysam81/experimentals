@@ -35,6 +35,12 @@ better understand the limitations and capabilities of each technology, better
 helping me decide on my future projects when trying to pick the right tool for
 the job.
 
+The main focus of this repository will be to use **Protobuf** as the
+serialization format. Everything else I'll add later on will be on top of that.
+I tend to think that Protobuf is *the best* serialization format we have so far,
+considering the performance efficiency and the human readability of the API.
+It's also cross-platform, which makes it a great choice for distributed systems.
+
 If you're interested in carrying along, or just want to add something to this
 journey, feel free to open a PR or an issue.
 
@@ -43,15 +49,17 @@ required tools as described below.
 
 ## Pre-requisites
 
-- [supervisord](http://supervisord.org/)
-- [haproxy](http://www.haproxy.org/)
-- [prometheus](https://prometheus.io/download/#prometheus)
-- [node-exporter](https://prometheus.io/download/#node_exporter)
-- [haproxy-exporter](https://prometheus.io/download/#haproxy_exporter)
+Sorted alphabetically:
+
 - [docker](https://docs.docker.com/install/)
 - [go](https://golang.org/dl/)
-- [python](https://www.python.org/downloads/)
+- [haproxy-exporter](https://prometheus.io/download/#haproxy_exporter)
+- [haproxy](http://www.haproxy.org/)
+- [node-exporter](https://prometheus.io/download/#node_exporter)
+- [prometheus](https://prometheus.io/download/#prometheus)
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
+- [python](https://www.python.org/downloads/)
+- [supervisord](http://supervisord.org/)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) [optional]
 
 ## Quick Start
