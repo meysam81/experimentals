@@ -53,6 +53,7 @@ Sorted alphabetically:
 
 - [docker](https://docs.docker.com/install/)
 - [go](https://golang.org/dl/)
+- [grpcurl](https://github.com/fullstorydev/grpcurl)
 - [haproxy-exporter](https://prometheus.io/download/#haproxy_exporter)
 - [haproxy](http://www.haproxy.org/)
 - [node-exporter](https://prometheus.io/download/#node_exporter)

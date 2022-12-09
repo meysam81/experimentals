@@ -37,7 +37,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server failed to listen: %v", err)
 	}
-	pb.RegisterGreeterServer(grpcServer, &server{})
+	pb.RegisterGreeterServer(grpcServer, &serverGreeter{})
+	pb.RegisterDataStoreServer(grpcServer, &serverDataStore{})
 	// start prometheus in background
 	go func() {
 		log.Printf("Prometheus listening on %v", metricsPort)

@@ -73,3 +73,27 @@ run: run-supervisor
 install: install-requirements-python install-requirements-golang
 
 reload: reload-supervisord
+
+ps:
+	supervisorctl -c ./supervisord/supervisord.conf avail
+
+restart:
+	supervisorctl -c ./supervisord/supervisord.conf restart $(service)
+
+stop:
+	supervisorctl -c ./supervisord/supervisord.conf stop $(service)
+
+start:
+	supervisorctl -c ./supervisord/supervisord.conf start $(service)
+
+tail:
+	supervisorctl -c ./supervisord/supervisord.conf tail $(service) $(device)
+
+grpcurl-greetings:
+	grpcurl -proto ./proto/greetings.proto -plaintext -d '{"name": "world"}' localhost:50050 greetings.Greeter/SayHello
+
+grpcurl-datastore:
+	grpcurl -proto ./proto/data_store.proto -plaintext -d '{"key": "hello", "value": "world"}' localhost:50050 data_store.DataStore/Save
+	grpcurl -proto ./proto/data_store.proto -plaintext -d '{"key": "hello"}' localhost:50050 data_store.DataStore/Load
+
+protoc: protoc-go protoc-python
