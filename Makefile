@@ -86,6 +86,14 @@ stop:
 start:
 	supervisorctl -c ./supervisord/supervisord.conf start $(service)
 
+start:
+	supervisorctl -c ./supervisord/supervisord.conf start $(service)
+
+up: run
+
+down:
+	supervisorctl -c ./supervisord/supervisord.conf shutdown
+
 tail:
 	supervisorctl -c ./supervisord/supervisord.conf tail $(service) $(device)
 
