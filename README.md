@@ -52,8 +52,9 @@ required tools as described below.
 Sorted alphabetically:
 
 - [docker](https://docs.docker.com/install/)
+- [etcd](https://github.com/etcd-io/etcd) [optional]
 - [go](https://golang.org/dl/)
-- [grpcurl](https://github.com/fullstorydev/grpcurl)
+- [grpcurl](https://github.com/fullstorydev/grpcurl) [optional]
 - [haproxy-exporter](https://prometheus.io/download/#haproxy_exporter)
 - [haproxy](http://www.haproxy.org/)
 - [node-exporter](https://prometheus.io/download/#node_exporter)
