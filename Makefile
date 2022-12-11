@@ -102,9 +102,9 @@ grpcurl-datastore:
 protoc: protoc-go protoc-python
 
 add-etcd-ip-addrs:
-	sudo ip a add 172.16.0.10/24 dev lo
-	sudo ip a add 172.16.0.20/24 dev lo
-	sudo ip a add 172.16.0.30/24 dev lo
+	sudo ip a add 172.16.0.10/24 dev lo || true
+	sudo ip a add 172.16.0.20/24 dev lo || true
+	sudo ip a add 172.16.0.30/24 dev lo	|| true
 
 promtool-check:
 	promtool check config ./prometheus/prometheus.yml
@@ -120,3 +120,15 @@ create-grafana-api-token-file:
 
 amtool-check:
 	amtool check-config ./prometheus/alertmanager.yml
+
+start-promlens: service := prometheus:promlens
+start-promlens: create-grafana-api-token-file start
+
+stop-promlens: service := prometheus:promlens
+stop-promlens: stop
+
+start-etcd: service := etcd:*
+start-etcd: add-etcd-ip-addrs start
+
+stop-etcd: service := etcd:*
+stop-etcd: stop
