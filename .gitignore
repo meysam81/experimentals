@@ -196,3 +196,5 @@ server.out
 
 # prometheus data
 data/
+
+grafana-api-token-file.txt

@@ -105,3 +105,18 @@ add-etcd-ip-addrs:
 	sudo ip a add 172.16.0.10/24 dev lo
 	sudo ip a add 172.16.0.20/24 dev lo
 	sudo ip a add 172.16.0.30/24 dev lo
+
+promtool-check:
+	promtool check config ./prometheus/prometheus.yml
+
+prometheus-reload:
+	curl -X POST http://localhost:9090/-/reload
+
+create-grafana-api-token-file: apikey := promlens
+create-grafana-api-token-file:
+	$(eval token := $(shell curl -s -X POST -H "Content-Type: application/json" -d '{"name":"$(apikey)", "role": "Admin"}' \
+		http://admin:admin@localhost:3000/api/auth/keys | jq -er .key))
+	test "$(token)" != "null" && echo "$(token)" | tee ./prometheus/grafana-api-token-file.txt || true
+
+amtool-check:
+	amtool check-config ./prometheus/alertmanager.yml

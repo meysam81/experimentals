@@ -1,0 +1,4 @@
+- targets:
+    - localhost:9102
+  labels:
+    job: statsd-exporter

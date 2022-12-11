@@ -2,6 +2,12 @@ global:
   evaluation_interval: 15s
   scrape_interval: 15s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093
+
 scrape_configs:
   - job_name: localhost
     file_sd_configs:
@@ -19,3 +25,17 @@ scrape_configs:
           - __meta_docker_container_name
         regex: ^/?(.*)$
         target_label: container_name
+      - source_labels:
+          - __meta_docker_network_ip
+        target_label: container_ip
+      - source_labels:
+          - __meta_docker_container_network_mode
+        target_label: container_network_mode
+      - source_labels:
+          - __meta_docker_container_id
+        action: hashmod
+        modulus: 1000000
+        target_label: container_id
+      - source_labels:
+          - __meta_docker_port_private
+        target_label: container_port
