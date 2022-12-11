@@ -68,5 +68,5 @@ Sorted alphabetically:
 
 ```bash
 make install
-make run
+make up
 ```

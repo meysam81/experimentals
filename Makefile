@@ -1,7 +1,5 @@
 PROTOS := $(shell find proto -name '*.proto')
 PWD := $(shell pwd)
-PYTHONPATH_SERVER := $(PWD)/server/python/:$(PWD)/server/python/proto_files
-PYTHONPATH_CLIENT := $(PWD)/client/python/:$(PWD)/client/python/proto_files
 
 protoc-go:
 	protoc \
@@ -86,9 +84,6 @@ stop:
 start:
 	supervisorctl -c ./supervisord/supervisord.conf start $(service)
 
-start:
-	supervisorctl -c ./supervisord/supervisord.conf start $(service)
-
 up: run
 
 down:
@@ -105,3 +100,8 @@ grpcurl-datastore:
 	grpcurl -proto ./proto/data_store.proto -plaintext -d '{"key": "hello"}' localhost:50050 data_store.DataStore/Load
 
 protoc: protoc-go protoc-python
+
+add-etcd-ip-addrs:
+	sudo ip a add 172.16.0.10/24 dev lo
+	sudo ip a add 172.16.0.20/24 dev lo
+	sudo ip a add 172.16.0.30/24 dev lo
