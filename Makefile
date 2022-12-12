@@ -132,3 +132,9 @@ start-etcd: add-etcd-ip-addrs start
 
 stop-etcd: service := etcd:*
 stop-etcd: stop
+
+start-kafka: service := kafka:*
+start-kafka: start
+
+stop-kafka: service := kafka:*
+stop-kafka: stop

@@ -16,6 +16,12 @@ logger = get_logger(__name__)
 class Greeter(greetings_pb2_grpc.GreeterServicer):
     def SayHello(self, request, context):
         logger.info("Greeter server received: " + request.name)
+        try:
+            from app.tasks import app as celery_app
+
+            celery_app.send_task("greet", args=[request.name])
+        except Exception as e:
+            logger.error(e)
         return greetings_pb2.HelloReply(message="Hello %s" % request.name)
 
 

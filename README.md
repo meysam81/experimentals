@@ -63,7 +63,7 @@ Sorted alphabetically:
 - [prometheus & promtool](https://prometheus.io/download/#prometheus)
 - [promlens](https://prometheus.io/download/#promlens)
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
-- [python](https://www.python.org/downloads/)
+- [python<=3.10](https://www.python.org/downloads/)
 - [supervisord](http://supervisord.org/)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) [optional]
 

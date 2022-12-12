@@ -1,0 +1,8 @@
+- targets:
+    - localhost:9308
+  labels:
+    job: kafka-exporter
+- targets:
+    - localhost:5556
+  labels:
+    job: kafka-jmx-exporter
