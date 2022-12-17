@@ -200,3 +200,5 @@ data/
 grafana-api-token-file.txt
 
 .python-version
+
+certs/*

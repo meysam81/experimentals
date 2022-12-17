@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <title>Protobuf Playground</title>
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="https://prometheus.io/assets/favicons/android-chrome-192x192.png"
+    />
+    <link rel="stylesheet" href="common.css" />
+  </head>
+
+  <table>
+    <tr>
+      <th>Resource/Measure</th>
+      <th>Usage</th>
+      <th>Total</th>
+    </tr>
+    <tr>
+      <td>Memory</td>
+      <td>{{ template "memoryUsage" . }}</td>
+      <td>{{ template "memoryTotal" . }}</td>
+    </tr>
+    <tr>
+      <td>CPU</td>
+      <td>{{ template "cpuUsage" . }}</td>
+      <td>{{ template "cpuTotal" . }}</td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <table>
+    <tr>
+      <th>Device/Measure</th>
+      <th>Bytes In</th>
+      <th>Bytes Out</th>
+      <th>Up</th>
+      <th>MTU</th>
+    </tr>
+    {{ range "sort_desc(instance:node_network_bytes:rate5m)" | query }}
+    <tr>
+      <td>{{ .Labels.device }}</td>
+      <td>
+        {{ printf "instance:node_network_bytes_in:rate5m{device=\"%s\"}"
+        .Labels.device | query | first | value | humanize1024 }}
+      </td>
+      <td>
+        {{ printf "instance:node_network_bytes_out:rate5m{device=\"%s\"}"
+        .Labels.device | query | first | value | humanize1024 }}
+      </td>
+      <td>
+        {{ printf "node_network_up{device=\"%s\"}"
+        .Labels.device | query | first | value | not | not }}
+      </td>
+      <td>
+        {{ printf "node_network_mtu_bytes{device=\"%s\"}"
+        .Labels.device | query | first | value }}
+      </td>
+    </tr>
+    {{ end }}
+  </table>
+</html>

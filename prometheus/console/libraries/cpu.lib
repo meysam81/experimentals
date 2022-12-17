@@ -1,0 +1,11 @@
+{{ define "cpuUsage" }}
+    {{ with "irate(node_cpu_seconds_total{mode!=\"idle\"}[5m])" | query }}
+        {{ . | first | value | printf "%.3f" }}
+    {{ end }}
+{{ end }}
+
+{{ define "cpuTotal" }}
+    {{ with "count(node_cpu_frequency_max_hertz)" | query }}
+        {{ . | first | value | printf "%.0f" }}
+    {{ end }}
+{{ end }}

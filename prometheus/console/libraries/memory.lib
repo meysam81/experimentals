@@ -1,0 +1,41 @@
+{{ define "memoryUsage" }}
+  {{ with printf "node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes" | query }}
+    {{ . | first | value | humanize1024 }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryUsagePercent" }}
+  {{ with printf "100 * (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | printf "%.2f" }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryUsagePercentBar" }}
+  {{ with printf "100 * (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | printf "%.2f" }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryUsagePercentBarGraph" }}
+  {{ with printf "100 * (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | printf "%.2f" }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryUsagePercentGraph" }}
+  {{ with printf "100 * (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | printf "%.2f" }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryUsagePercentLineGraph" }}
+  {{ with printf "100 * (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | printf "%.2f" }}
+  {{ end }}
+{{ end }}
+
+{{ define "memoryTotal" }}
+  {{ with printf "node_memory_MemTotal_bytes" | query }}
+    {{ . | first | value | humanize1024 }}
+  {{ end }}
+{{ end }}

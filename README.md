@@ -61,7 +61,7 @@ Sorted alphabetically:
 - [jq](https://stedolan.github.io/jq/download/)
 - [node-exporter](https://prometheus.io/download/#node_exporter)
 - [prometheus & promtool](https://prometheus.io/download/#prometheus)
-- [promlens](https://prometheus.io/download/#promlens)
+- [promlens](https://prometheus.io/download/#promlens) [optional]
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
 - [python<=3.10](https://www.python.org/downloads/)
 - [supervisord](http://supervisord.org/)

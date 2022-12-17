@@ -39,3 +39,11 @@ scrape_configs:
       - source_labels:
           - __meta_docker_port_private
         target_label: container_port
+
+
+rule_files:
+  - ./rules/*.alerts.yml
+  - ./rules/*.rules.yml
+
+tracing:
+  endpoint: http://localhost:9411/api/v2/spans

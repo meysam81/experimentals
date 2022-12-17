@@ -138,3 +138,17 @@ start-kafka: start
 
 stop-kafka: service := kafka:*
 stop-kafka: stop
+
+promrule-test:
+	promtool test rules ./prometheus/rules/tests/*
+
+cert-ca:
+	step certificate create localhost ./certs/ca.crt ./certs/ca.key --insecure --no-password --profile root-ca
+
+cert-prometheus:
+	step certificate create prometheus ./certs/prometheus.crt ./certs/prometheus.key --san localhost --insecure --no-password --ca ./certs/ca.crt --ca-key ./certs/ca.key
+
+cert-prom-client:
+	step certificate create prom-client ./certs/prom-client.crt ./certs/prom-client.key --insecure --no-password --ca ./certs/ca.crt --ca-key ./certs/ca.key
+
+certs: cert-ca cert-prometheus cert-prom-client

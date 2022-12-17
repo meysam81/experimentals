@@ -1,0 +1,57 @@
+groups:
+  - name: cpu recording rules
+    rules:
+      - record: instance:node_cpu_utilisation:rate1m
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)
+      - record: job:process_cpu_utilisation:rate1m
+        expr: avg by (job, lang) (irate(process_cpu_seconds_total[1m])) * 100
+      - record: job:process_cpu_utilisation:rate5m
+        expr: avg by (job, lang) (irate(process_cpu_seconds_total[5m])) * 100
+  - name: cpu alerting rules
+    rules:
+      - alert: NodeCPUAbove90Percent
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} CPU usage is high"
+          description: "Instance {{ $labels.instance }} CPU usage is high (current value: {{ $value }})"
+      - alert: ProcessCPUAbove90Percent
+        expr: 100 - (avg by (job, lang) (irate(process_cpu_seconds_total[5m])) * 100) > 90
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job {{ $labels.job }} CPU usage is high"
+          description: "Job {{ $labels.job }} CPU usage is high (current value: {{ $value }})"
+  - name: memory recording rules
+    rules:
+      - record: instance:node_memory_utilisation:ratio
+        expr: 1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+      - record: job:process_memory_utilisation:ratio
+        expr: process_resident_memory_bytes / node_memory_MemTotal_bytes * 100
+  - name: down alert
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "Instance {{ $labels.instance }} down (current value: {{ $value }})"
+  - name: network bytes
+    rules:
+      - record: instance:node_network_bytes:rate1m
+        expr: rate(node_network_receive_bytes_total[1m]) + rate(node_network_transmit_bytes_total[1m])
+      - record: job:process_network_bytes:rate1m
+        expr: rate(process_open_fds[1m])
+      - record: instance:node_network_bytes:rate5m
+        expr: rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])
+      - record: job:process_network_bytes:rate5m
+        expr: rate(process_open_fds[5m])
+      - record: instance:node_network_bytes_in:rate5m
+        expr: rate(node_network_transmit_bytes_total[5m])
+      - record: instance:node_network_bytes_out:rate5m
+        expr: rate(node_network_receive_bytes_total[5m])
