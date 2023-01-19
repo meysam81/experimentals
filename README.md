@@ -59,6 +59,7 @@ Sorted alphabetically:
 - [haproxy-exporter](https://prometheus.io/download/#haproxy_exporter)
 - [haproxy](http://www.haproxy.org/)
 - [jq](https://stedolan.github.io/jq/download/)
+- [kratos](https://github.com/ory/kratos/releases)
 - [node-exporter](https://prometheus.io/download/#node_exporter)
 - [prometheus & promtool](https://prometheus.io/download/#prometheus)
 - [promlens](https://prometheus.io/download/#promlens) [optional]
