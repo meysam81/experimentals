@@ -24,8 +24,10 @@
       {% else %}
 
       <div class="field">
+        {% if not input.type == "hidden" %}
         <label for="{{ input.id }}">{{ input.label }}</label>
-        {% if input.required %} {% endif %}
+        {% endif %}
+
         <input
           type="{{ input.type }}"
           name="{{ input.id }}"
@@ -37,6 +39,7 @@
           {%
           endif
           %}
+          value="{{ input.value }}"
         />
       </div>
       {% endif %} {% endfor %}

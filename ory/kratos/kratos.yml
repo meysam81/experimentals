@@ -12,9 +12,9 @@ serve:
     base_url: http://127.0.0.1:4434/
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:8000/
+  default_browser_return_url: http://127.0.0.1:4455/
   allowed_return_urls:
-    - http://127.0.0.1:8000
+    - http://127.0.0.1:4455
 
   methods:
     password:
@@ -36,41 +36,42 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://127.0.0.1:8000/error
+      ui_url: http://127.0.0.1:4455/error
 
     settings:
-      ui_url: http://127.0.0.1:8000/settings
+      ui_url: http://127.0.0.1:4455/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: http://127.0.0.1:8000/recovery
+      ui_url: http://127.0.0.1:4455/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: http://127.0.0.1:8000/verification/callback
+      ui_url: http://127.0.0.1:4455/verification
       use: code
       lifespan: 10m
       after:
-        default_browser_return_url: http://127.0.0.1:8000/
+        default_browser_return_url: http://127.0.0.1:4455/login
 
     logout:
       after:
-        default_browser_return_url: http://127.0.0.1:8000/login
+        default_browser_return_url: http://127.0.0.1:4455/login
 
     login:
-      ui_url: http://127.0.0.1:8000/login/callback
+      ui_url: http://127.0.0.1:4455/login
       lifespan: 10m
-      # after:
-      #   hooks:
-      #   - hook: require_verified_address
+      after:
+        hooks:
+        - hook: require_verified_address
 
     registration:
       lifespan: 10m
-      ui_url: http://127.0.0.1:8000/registration/callback
+      ui_url: http://127.0.0.1:4455/registration
       after:
+        default_browser_return_url: http://127.0.0.1:4455/verification
         # password:
         #   hooks:
         #     - hook: session

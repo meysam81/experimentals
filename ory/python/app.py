@@ -20,28 +20,56 @@ templates = Jinja2Templates(directory=TEMPLATES)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
+@app.get("/error")
+async def error(request: Request):
+    logger.error(request.headers)
+    logger.error(await request.body())
+    return {"message": "Error"}
+
+
 @app.get(
-    "/login",
-    response_class=RedirectResponse,
-    status_code=HTTPStatus.SEE_OTHER,
-    description="Redirect to Kratos login page",
+    "/",
+    responses={
+        HTTPStatus.OK: {
+            "description": "The user is already logged in and will gets the session info"
+        },
+        HTTPStatus.SEE_OTHER: {
+            "description": "The user is not logged in and will be redirected to the login page"
+        },
+    },
 )
-async def login_redirect_kratos():
-    url = urljoin(
-        settings.KRATOS_PUBLIC_URL,
-        settings.KRATOS_BROWSER_LOGIN_URI,
+async def index(request: Request):
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    if result.status_code == HTTPStatus.OK:
+        return result.json()
+
+    return RedirectResponse(
+        url=settings.LOGIN_CALLBACK_URI, status_code=HTTPStatus.SEE_OTHER
     )
-    return RedirectResponse(url=url, status_code=HTTPStatus.SEE_OTHER)
 
 
 @app.get(settings.LOGIN_CALLBACK_URI, response_class=HTMLResponse)
-async def login_callback(request: Request, flow: str):
+async def login(request: Request, flow: str = None):
+    if not flow:
+        url = urljoin(
+            settings.KRATOS_PUBLIC_URL,
+            settings.KRATOS_LOGIN_BROWSER_URI,
+        )
+        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
+
     logger.debug(await request.body())
+    logger.debug(request.headers)
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
-            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_BROWSER_LOGIN_URI),
-            params={"flow": flow},
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_LOGIN_FLOW_URI),
+            params={"id": flow},
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
@@ -83,84 +111,58 @@ async def login_callback(request: Request, flow: str):
     return response
 
 
-@app.get("/error")
-async def error(request: Request):
-    logger.error(request.headers)
-    logger.error(await request.body())
-    return {"message": "Error"}
-
-
-@app.get(
-    "/",
-    responses={
-        HTTPStatus.OK: {
-            "description": "The user is already logged in and will gets the session info"
-        },
-        HTTPStatus.SEE_OTHER: {
-            "description": "The user is not logged in and will be redirected to the login page"
-        },
-    },
-)
-async def index(request: Request):
-    async with httpx.AsyncClient() as client:
-        result = await client.get(
-            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
-            headers={"accept": "application/json"},
-            cookies=request.cookies,
-        )
-
-    if result.status_code == HTTPStatus.OK:
-        return result.json()
-
-    return RedirectResponse(url="/login", status_code=HTTPStatus.SEE_OTHER)
-
-
-@app.get(
-    "/verification",
-    response_class=RedirectResponse,
-    status_code=HTTPStatus.SEE_OTHER,
-    description="Redirect to Kratos verification page",
-)
-async def verification_redirect_kratos():
-    url = urljoin(
-        settings.KRATOS_PUBLIC_URL,
-        settings.KRATOS_BROWSER_VERIFICATION_URI,
-    )
-    return RedirectResponse(url=url, status_code=HTTPStatus.SEE_OTHER)
-
-
 @app.get(settings.VERIFICATION_CALLBACK_URI, response_class=HTMLResponse)
-async def verification_callback(request: Request, flow: str):
+async def verification(request: Request, flow: str = None, code: str = ""):
+    if not flow:
+        url = (
+            urljoin(
+                settings.KRATOS_PUBLIC_URL,
+                settings.KRATOS_VERIFICATION_BROWSER_URI,
+            )
+            + f"?return_to=/"
+        )
+        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
+
     logger.debug(await request.body())
     logger.debug(request.headers)
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
             urljoin(
-                settings.KRATOS_PUBLIC_URL, settings.KRATOS_BROWSER_VERIFICATION_URI
+                settings.KRATOS_PUBLIC_URL,
+                settings.KRATOS_VERIFICATION_FLOW_URI,
             ),
-            params={"flow": flow},
+            params={"id": flow},
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
 
+    if result.status_code == HTTPStatus.NOT_FOUND:
+        return RedirectResponse(
+            url=settings.VERIFICATION_CALLBACK_URI, status_code=HTTPStatus.SEE_OTHER
+        )
+
     logger.debug(f"{result.status_code} {result.text}")
     json_ = result.json()
+
+    if json_.get("state") == "passed_challenge":
+        return RedirectResponse(url="/", status_code=HTTPStatus.SEE_OTHER)
+
     inputs = []
     csrf_token = None
     for input_ in json_["ui"]["nodes"]:
         if input_["attributes"]["name"] == "csrf_token":
             csrf_token = input_["attributes"]["value"]
             continue
-        # value = "link" if input_["attributes"]["name"] == "method" else None
-        value = None
+        name = input_["attributes"]["name"]
+        value = code if name == "code" else input_["attributes"].get("value", "")
         inputs.append(
             {
-                "id": input_["attributes"]["name"],
-                "label": input_["meta"]["label"]["text"],
+                "id": name,
+                "label": input_["meta"].get("label", {}).get("text"),
                 "required": input_["attributes"].get("required", False),
                 "type": input_["attributes"]["type"],
-                "value": value or input_["attributes"].get("value"),
+                "value": value,
             }
         )
 
@@ -184,24 +186,21 @@ async def verification_callback(request: Request, flow: str):
     return response
 
 
-@app.get("/register", name="register")
-async def register_redirect_kratos():
-    url = urljoin(
-        settings.KRATOS_PUBLIC_URL,
-        settings.KRATOS_BROWSER_REGISTRATION_URI,
-    )
-    return RedirectResponse(url=url, status_code=HTTPStatus.SEE_OTHER)
-
-
 @app.get(settings.REGISTRATION_CALLBACK_URI, response_class=HTMLResponse)
-async def registration_callback(request: Request, flow: str):
+async def registration(request: Request, flow: str = None):
+    if not flow:
+        url = urljoin(
+            settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_BROWSER_URI
+        )
+        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
+
     logger.debug(await request.body())
     logger.debug(request.headers)
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
             urljoin(
-                settings.KRATOS_PUBLIC_URL, settings.KRATOS_BROWSER_REGISTRATION_URI
+                settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_BROWSER_URI
             ),
             params={"flow": flow},
             headers={"accept": "application/json"},
@@ -256,9 +255,9 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
         reload_dirs=[HERE],
         log_level=settings.LOG_LEVEL.lower(),
     )
