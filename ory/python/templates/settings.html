@@ -1,5 +1,6 @@
 <html>
   <head>
+    <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet" />
     <title>Settings</title>
   </head>
   <body>
@@ -33,7 +34,9 @@
           value="{{ input.value }}"
         />
       </div>
-      {% endif %} {% endfor %}
+      {% endif %}
+      <br/>
+      {% endfor %}
     </form>
   </body>
 </html>

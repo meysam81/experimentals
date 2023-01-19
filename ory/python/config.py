@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     REGISTRATION_URI: str = "/registration"
     LOGOUT_URI: str = "/logout"
     RECOVERY_URI: str = "/recovery"
+    SETTINGS_URI: str = "/settings"
 
     LOG_LEVEL: str = "INFO"
     HOST: str = "0.0.0.0"

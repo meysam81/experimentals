@@ -54,12 +54,15 @@ async def index(request: Request):
 
 @app.get(settings.LOGIN_URI, response_class=HTMLResponse)
 async def login(request: Request, flow: str = None):
+    redirect_url = urljoin(
+        settings.KRATOS_PUBLIC_URL,
+        settings.KRATOS_LOGIN_BROWSER_URI,
+    )
+
     if not flow:
-        url = urljoin(
-            settings.KRATOS_PUBLIC_URL,
-            settings.KRATOS_LOGIN_BROWSER_URI,
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
-        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
 
     logger.debug(await request.body())
     logger.debug(request.headers)
@@ -73,6 +76,12 @@ async def login(request: Request, flow: str = None):
         )
 
     logger.debug(f"{result.status_code} {result.text}")
+
+    if result.status_code == HTTPStatus.NOT_FOUND:
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
+
     json_ = result.json()
     inputs = []
     csrf_token = None
@@ -111,15 +120,17 @@ async def login(request: Request, flow: str = None):
 
 @app.get(settings.VERIFICATION_URI, response_class=HTMLResponse)
 async def verification(request: Request, flow: str = None, code: str = ""):
-    if not flow:
-        url = (
-            urljoin(
-                settings.KRATOS_PUBLIC_URL,
-                settings.KRATOS_VERIFICATION_BROWSER_URI,
-            )
-            + f"?return_to=/"
+    redirect_url = (
+        urljoin(
+            settings.KRATOS_PUBLIC_URL,
+            settings.KRATOS_VERIFICATION_BROWSER_URI,
         )
-        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
+        + f"?return_to=/"
+    )
+    if not flow:
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
 
     logger.debug(await request.body())
     logger.debug(request.headers)
@@ -136,9 +147,7 @@ async def verification(request: Request, flow: str = None, code: str = ""):
         )
 
     if result.status_code == HTTPStatus.NOT_FOUND:
-        return RedirectResponse(
-            url=settings.VERIFICATION_URI, status_code=HTTPStatus.SEE_OTHER
-        )
+        return RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
 
     logger.debug(f"{result.status_code} {result.text}")
     json_ = result.json()
@@ -186,11 +195,13 @@ async def verification(request: Request, flow: str = None, code: str = ""):
 
 @app.get(settings.REGISTRATION_URI, response_class=HTMLResponse)
 async def registration(request: Request, flow: str = None):
+    redirect_url = urljoin(
+        settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_BROWSER_URI
+    )
     if not flow:
-        url = urljoin(
-            settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_BROWSER_URI
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
-        return RedirectResponse(url=url, status_code=HTTPStatus.TEMPORARY_REDIRECT)
 
     logger.debug(await request.body())
     logger.debug(request.headers)
@@ -204,6 +215,12 @@ async def registration(request: Request, flow: str = None):
         )
 
     logger.debug(f"{result.status_code} {result.text}")
+
+    if result.status_code == HTTPStatus.NOT_FOUND:
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
+
     json_ = result.json()
     inputs = []
     csrf_token = None
@@ -276,10 +293,13 @@ async def logout(request: Request):
 
 @app.get(settings.RECOVERY_URI, response_class=HTMLResponse)
 async def recovery(request: Request, flow: str = None):
+    redirect_url = urljoin(
+        settings.KRATOS_PUBLIC_URL, settings.KRATOS_RECOVERY_BROWSER_URI
+    )
     if not flow:
-        url = urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_RECOVERY_BROWSER_URI)
         return RedirectResponse(
-            url=url + f"?return_to=/login", status_code=HTTPStatus.TEMPORARY_REDIRECT
+            url=redirect_url + f"?return_to=/login",
+            status_code=HTTPStatus.TEMPORARY_REDIRECT,
         )
 
     logger.debug(await request.body())
@@ -294,6 +314,11 @@ async def recovery(request: Request, flow: str = None):
         )
 
     logger.debug(f"{result.status_code} {result.text}")
+
+    if result.status_code == HTTPStatus.NOT_FOUND:
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
 
     json_ = result.json()
     inputs = []
@@ -332,7 +357,7 @@ async def recovery(request: Request, flow: str = None):
     return response
 
 
-@app.get("/settings", response_class=HTMLResponse, name="settings")
+@app.get(settings.SETTINGS_URI, response_class=HTMLResponse, name="settings")
 async def profile(request: Request, flow: str = None):
     redirect_url = (
         urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_SETTINGS_BROWSER_URI)
@@ -378,6 +403,16 @@ async def profile(request: Request, flow: str = None):
             name = input_["attributes"]["id"]
             value = base64_img
             type_ = input_["attributes"]["node_type"]
+
+        elif input_["attributes"].get("id") == "totp_secret_key":
+            name = input_["attributes"]["id"]
+            type_ = input_["attributes"]["node_type"]
+            value = input_["attributes"]["text"]["text"]
+
+        elif input_["attributes"].get("id") == "lookup_secret_codes":
+            name = input_["attributes"]["id"]
+            type_ = input_["attributes"]["node_type"]
+            value = input_["attributes"]["text"]["text"]
 
         inputs.append(
             {
