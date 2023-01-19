@@ -202,3 +202,5 @@ grafana-api-token-file.txt
 .python-version
 
 certs/*
+data-agent
+playground.ipynb

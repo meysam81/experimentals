@@ -6,7 +6,8 @@ import (
 	"net"
 	"net/http"
 
-	pb "grpc_tutorial/proto/greetings"
+	pbv1 "grpc_tutorial/proto/v1"
+	pbv2 "grpc_tutorial/proto/v2"
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,8 +38,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server failed to listen: %v", err)
 	}
-	pb.RegisterGreeterServer(grpcServer, &serverGreeter{})
-	pb.RegisterDataStoreServer(grpcServer, &serverDataStore{})
+	pbv1.RegisterGreeterServer(grpcServer, &serverGreeter{})
+	pbv1.RegisterDataStoreServer(grpcServer, &serverDataStore{})
+	pbv2.RegisterHealthServer(grpcServer, &serverHealthCheck{})
 	// start prometheus in background
 	go func() {
 		log.Printf("Prometheus listening on %v", metricsPort)

@@ -1,0 +1,17 @@
+
+
+<h1>Prometheus</h1>
+
+<h3>Queries</h3>
+<div id="queryGraph"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#queryGraph"),
+  expr: "sum(rate(http_query_count{job='prometheus'}[5m]))",
+  name: "Queries",
+  yAxisFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+  yHoverFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+  yUnits: "/s",
+  yTitle: "Queries"
+})
+</script>

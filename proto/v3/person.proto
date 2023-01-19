@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "v1/data_store.proto";
+
+import "google/protobuf/any.proto";
+
+
+option go_package = "./v3";
+
+message Person {
+    string name = 1;
+    int32 id = 2;
+    optional string email = 3;
+    repeated string phone = 5;
+    double height = 6;
+    Gender gender = 7;
+    repeated data_store.SaveRequest metadata = 8;
+    google.protobuf.Any extra = 9;
+    oneof identity {
+        string ssn = 10;
+        string passport = 11;
+    }
+    map<string, string> tags = 12;
+    map<string, Value> values = 13;
+}
+
+enum Value {
+    GOOD = 0;
+    BAD = 1;
+}
+
+enum Gender {
+    MALE = 0;
+    FEMALE = 1;
+    NONBINARY = 2;
+}

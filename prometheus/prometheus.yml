@@ -40,6 +40,25 @@ scrape_configs:
           - __meta_docker_port_private
         target_label: container_port
 
+  - job_name: "federate"
+    scrape_interval: 15s
+
+    honor_labels: true
+    metrics_path: "/federate"
+
+    params:
+      "match[]":
+        - '{job="prometheus"}'
+        - '{__name__=~"job:.*"}'
+
+    static_configs:
+      - targets:
+          - localhost:9080
+
+  - job_name: "dynamics"
+    http_sd_configs:
+      - url: http://localhost:1323
+        refresh_interval: "60s"
 
 rule_files:
   - ./rules/*.alerts.yml
@@ -47,3 +66,9 @@ rule_files:
 
 tracing:
   endpoint: http://localhost:9411/api/v2/spans
+
+remote_read:
+  - url: http://localhost:9080/api/v1/read
+    remote_timeout: "1m"
+    read_recent: false
+    follow_redirects: true

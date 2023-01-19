@@ -1,10 +1,10 @@
-tls_server_config:
-  cert_file: ../certs/prometheus.crt
-  key_file: ../certs/prometheus.key
-  client_auth_type: RequireAndVerifyClientCert
-  client_ca_file: ../certs/ca.crt
-  min_version: TLS13
-  max_version: TLS13
+# tls_server_config:
+#   cert_file: ../certs/prometheus.crt
+#   key_file: ../certs/prometheus.key
+#   client_auth_type: RequireAndVerifyClientCert
+#   client_ca_file: ../certs/ca.crt
+#   min_version: TLS13
+#   max_version: TLS13
 
 http_server_config:
   http2: true
@@ -15,5 +15,5 @@ http_server_config:
     X-XSS-Protection: "1; mode=block"
     Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
 
-basic_auth_users:
-  meysam:  $2y$05$INZUjNkoDpal9bNU9Ecx9OwZazMF3e44iHAc/o1iHZ4Vfcgxs3orO # `password`
+# basic_auth_users:
+#   meysam:  $2y$05$INZUjNkoDpal9bNU9Ecx9OwZazMF3e44iHAc/o1iHZ4Vfcgxs3orO # `password`

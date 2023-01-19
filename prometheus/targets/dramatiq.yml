@@ -1,0 +1,6 @@
+- targets:
+    - localhost:9191
+  labels:
+    job: dramatiq
+    lang: python
+    type: worker
