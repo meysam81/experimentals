@@ -30,14 +30,6 @@
         <input
           type="{{ input.type }}"
           name="{{ input.id }}"
-          {%
-          if
-          input.required
-          %}
-          required
-          {%
-          endif
-          %}
         />
       </div>
       {% endif %} {% endfor %}

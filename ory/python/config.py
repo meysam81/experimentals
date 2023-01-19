@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     KRATOS_VERIFICATION_FLOW_URI: str = "/self-service/verification/flows"
 
     KRATOS_REGISTRATION_BROWSER_URI: str = "/self-service/registration/browser"
+    KRATOS_REGISTRATION_FLOW_URI: str = "/self-service/registration/flows"
 
     KRATOS_LOGOUT_BROWSER_URI: str = "/self-service/logout/browser"
 

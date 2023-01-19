@@ -16,6 +16,10 @@
           {{ input.label }}
         </button>
       </div>
+      {% elif input.type == "img" %}
+        <div class="field">
+            <img src="{{ input.value }}" />
+        </div>
       {% else %}
       <div class="field">
         {% if not input.type == "hidden" %}

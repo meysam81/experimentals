@@ -83,10 +83,10 @@ async def login(request: Request, flow: str = None):
         inputs.append(
             {
                 "id": input_["attributes"]["name"],
-                "label": input_["meta"]["label"]["text"],
+                "label": input_["meta"].get("label", {}).get("text"),
                 "required": input_["attributes"].get("required", False),
                 "type": input_["attributes"]["type"],
-                "value": input_["attributes"].get("value"),
+                "value": input_["attributes"].get("value", ""),
             }
         )
 
@@ -197,10 +197,8 @@ async def registration(request: Request, flow: str = None):
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
-            urljoin(
-                settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_BROWSER_URI
-            ),
-            params={"flow": flow},
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_REGISTRATION_FLOW_URI),
+            params={"id": flow},
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
@@ -216,7 +214,7 @@ async def registration(request: Request, flow: str = None):
         inputs.append(
             {
                 "id": input_["attributes"]["name"],
-                "label": input_["meta"]["label"]["text"],
+                "label": input_["meta"].get("label", {}).get("text"),
                 "required": input_["attributes"].get("required", False),
                 "type": input_["attributes"]["type"],
                 "value": input_["attributes"].get("value"),
@@ -257,6 +255,9 @@ async def logout(request: Request):
 
     logger.debug(f"{result.status_code} {result.text}")
 
+    if result.status_code == HTTPStatus.UNAUTHORIZED:
+        return RedirectResponse(url="/", status_code=HTTPStatus.SEE_OTHER)
+
     json_ = result.json()
 
     response = templates.TemplateResponse(
@@ -293,6 +294,7 @@ async def recovery(request: Request, flow: str = None):
         )
 
     logger.debug(f"{result.status_code} {result.text}")
+
     json_ = result.json()
     inputs = []
     csrf_token = None
@@ -332,10 +334,14 @@ async def recovery(request: Request, flow: str = None):
 
 @app.get("/settings", response_class=HTMLResponse, name="settings")
 async def profile(request: Request, flow: str = None):
+    redirect_url = (
+        urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_SETTINGS_BROWSER_URI)
+        + f"?return_to={settings.LOGIN_URI}"
+    )
+
     if not flow:
-        url = urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_SETTINGS_BROWSER_URI)
         return RedirectResponse(
-            url=url + f"?return_to=/login", status_code=HTTPStatus.TEMPORARY_REDIRECT
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
 
     logger.debug(await request.body())
@@ -350,23 +356,36 @@ async def profile(request: Request, flow: str = None):
         )
 
     logger.debug(f"{result.status_code} {result.text}")
+
+    if result.status_code == HTTPStatus.NOT_FOUND:
+        return RedirectResponse(
+            url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
+
     json_ = result.json()
     inputs = []
     csrf_token = None
     for input_ in json_["ui"]["nodes"]:
-        if not input_["attributes"].get("name"):
-            continue
+        name = input_["attributes"].get("name")
+        value = input_["attributes"].get("value", "")
+        type_ = input_["attributes"].get("type")
 
-        if input_["attributes"]["name"] == "csrf_token":
+        if name == "csrf_token":
             csrf_token = input_["attributes"]["value"]
             continue
+
+        if base64_img := input_["attributes"].get("src"):
+            name = input_["attributes"]["id"]
+            value = base64_img
+            type_ = input_["attributes"]["node_type"]
+
         inputs.append(
             {
-                "id": input_["attributes"]["name"],
+                "id": name,
                 "label": input_["meta"].get("label", {}).get("text"),
                 "required": input_["attributes"].get("required", False),
-                "type": input_["attributes"]["type"],
-                "value": input_["attributes"].get("value", ""),
+                "type": type_,
+                "value": value,
             }
         )
 
