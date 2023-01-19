@@ -47,6 +47,10 @@ selfservice:
       enabled: true
       ui_url: http://127.0.0.1:4455/recovery
       use: code
+      after:
+        default_browser_return_url: http://127.0.0.1:4455/verification
+        hooks:
+        - hook: revoke_active_sessions
 
     verification:
       enabled: true

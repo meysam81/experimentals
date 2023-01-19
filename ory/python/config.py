@@ -12,11 +12,21 @@ class Settings(BaseSettings):
 
     KRATOS_REGISTRATION_BROWSER_URI: str = "/self-service/registration/browser"
 
+    KRATOS_LOGOUT_BROWSER_URI: str = "/self-service/logout/browser"
+
+    KRATOS_RECOVERY_BROWSER_URI: str = "/self-service/recovery/browser"
+    KRATOS_RECOVERY_FLOW_URI: str = "/self-service/recovery/flows"
+
+    KRATOS_SETTINGS_BROWSER_URI: str = "/self-service/settings/browser"
+    KRATOS_SETTINGS_FLOW_URI: str = "/self-service/settings/flows"
+
     KRATOS_WHOAMI_URI: str = "/sessions/whoami"
 
-    LOGIN_CALLBACK_URI: str = "/login"
-    VERIFICATION_CALLBACK_URI: str = "/verification"
-    REGISTRATION_CALLBACK_URI: str = "/registration"
+    LOGIN_URI: str = "/login"
+    VERIFICATION_URI: str = "/verification"
+    REGISTRATION_URI: str = "/registration"
+    LOGOUT_URI: str = "/logout"
+    RECOVERY_URI: str = "/recovery"
 
     LOG_LEVEL: str = "INFO"
     HOST: str = "0.0.0.0"

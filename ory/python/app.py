@@ -49,12 +49,10 @@ async def index(request: Request):
     if result.status_code == HTTPStatus.OK:
         return result.json()
 
-    return RedirectResponse(
-        url=settings.LOGIN_CALLBACK_URI, status_code=HTTPStatus.SEE_OTHER
-    )
+    return RedirectResponse(url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER)
 
 
-@app.get(settings.LOGIN_CALLBACK_URI, response_class=HTMLResponse)
+@app.get(settings.LOGIN_URI, response_class=HTMLResponse)
 async def login(request: Request, flow: str = None):
     if not flow:
         url = urljoin(
@@ -111,7 +109,7 @@ async def login(request: Request, flow: str = None):
     return response
 
 
-@app.get(settings.VERIFICATION_CALLBACK_URI, response_class=HTMLResponse)
+@app.get(settings.VERIFICATION_URI, response_class=HTMLResponse)
 async def verification(request: Request, flow: str = None, code: str = ""):
     if not flow:
         url = (
@@ -139,7 +137,7 @@ async def verification(request: Request, flow: str = None, code: str = ""):
 
     if result.status_code == HTTPStatus.NOT_FOUND:
         return RedirectResponse(
-            url=settings.VERIFICATION_CALLBACK_URI, status_code=HTTPStatus.SEE_OTHER
+            url=settings.VERIFICATION_URI, status_code=HTTPStatus.SEE_OTHER
         )
 
     logger.debug(f"{result.status_code} {result.text}")
@@ -186,7 +184,7 @@ async def verification(request: Request, flow: str = None, code: str = ""):
     return response
 
 
-@app.get(settings.REGISTRATION_CALLBACK_URI, response_class=HTMLResponse)
+@app.get(settings.REGISTRATION_URI, response_class=HTMLResponse)
 async def registration(request: Request, flow: str = None):
     if not flow:
         url = urljoin(
@@ -230,6 +228,153 @@ async def registration(request: Request, flow: str = None):
 
     response = templates.TemplateResponse(
         "registration.html",
+        {
+            "action": action,
+            "method": method,
+            "csrf_token": csrf_token,
+            "inputs": inputs,
+            "request": request,
+        },
+    )
+
+    for cookie, value in request.cookies.items():
+        response.set_cookie(cookie, value)
+
+    return response
+
+
+@app.get(settings.LOGOUT_URI, response_class=HTMLResponse)
+async def logout(request: Request):
+    logger.debug(await request.body())
+    logger.debug(request.headers)
+
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_LOGOUT_BROWSER_URI),
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    logger.debug(f"{result.status_code} {result.text}")
+
+    json_ = result.json()
+
+    response = templates.TemplateResponse(
+        "logout.html",
+        {
+            "request": request,
+            "logout_url": json_["logout_url"],
+        },
+    )
+
+    for cookie, value in request.cookies.items():
+        response.set_cookie(cookie, value)
+
+    return response
+
+
+@app.get(settings.RECOVERY_URI, response_class=HTMLResponse)
+async def recovery(request: Request, flow: str = None):
+    if not flow:
+        url = urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_RECOVERY_BROWSER_URI)
+        return RedirectResponse(
+            url=url + f"?return_to=/login", status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
+
+    logger.debug(await request.body())
+    logger.debug(request.headers)
+
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_RECOVERY_FLOW_URI),
+            params={"id": flow},
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    logger.debug(f"{result.status_code} {result.text}")
+    json_ = result.json()
+    inputs = []
+    csrf_token = None
+    for input_ in json_["ui"]["nodes"]:
+        if input_["attributes"]["name"] == "csrf_token":
+            csrf_token = input_["attributes"]["value"]
+            continue
+        inputs.append(
+            {
+                "id": input_["attributes"]["name"],
+                "label": input_["meta"].get("label", {}).get("text"),
+                "required": input_["attributes"].get("required", False),
+                "type": input_["attributes"]["type"],
+                "value": input_["attributes"].get("value", ""),
+            }
+        )
+
+    action = json_["ui"]["action"]
+    method = json_["ui"]["method"]
+
+    response = templates.TemplateResponse(
+        "recovery.html",
+        {
+            "action": action,
+            "method": method,
+            "csrf_token": csrf_token,
+            "inputs": inputs,
+            "request": request,
+        },
+    )
+
+    for cookie, value in request.cookies.items():
+        response.set_cookie(cookie, value)
+
+    return response
+
+
+@app.get("/settings", response_class=HTMLResponse, name="settings")
+async def profile(request: Request, flow: str = None):
+    if not flow:
+        url = urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_SETTINGS_BROWSER_URI)
+        return RedirectResponse(
+            url=url + f"?return_to=/login", status_code=HTTPStatus.TEMPORARY_REDIRECT
+        )
+
+    logger.debug(await request.body())
+    logger.debug(request.headers)
+
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_SETTINGS_FLOW_URI),
+            params={"id": flow},
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    logger.debug(f"{result.status_code} {result.text}")
+    json_ = result.json()
+    inputs = []
+    csrf_token = None
+    for input_ in json_["ui"]["nodes"]:
+        if not input_["attributes"].get("name"):
+            continue
+
+        if input_["attributes"]["name"] == "csrf_token":
+            csrf_token = input_["attributes"]["value"]
+            continue
+        inputs.append(
+            {
+                "id": input_["attributes"]["name"],
+                "label": input_["meta"].get("label", {}).get("text"),
+                "required": input_["attributes"].get("required", False),
+                "type": input_["attributes"]["type"],
+                "value": input_["attributes"].get("value", ""),
+            }
+        )
+
+    action = json_["ui"]["action"]
+    method = json_["ui"]["method"]
+
+    response = templates.TemplateResponse(
+        "settings.html",
         {
             "action": action,
             "method": method,
