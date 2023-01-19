@@ -9,7 +9,7 @@ tls_server_config:
 http_server_config:
   http2: true
   headers:
-    Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none';"
+    # Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none';"
     X-Content-Type-Options: "nosniff"
     X-Frame-Options: "sameorigin"
     X-XSS-Protection: "1; mode=block"

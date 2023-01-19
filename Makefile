@@ -143,12 +143,14 @@ promrule-test:
 	promtool test rules ./prometheus/rules/tests/*
 
 cert-ca:
-	step certificate create localhost ./certs/ca.crt ./certs/ca.key --insecure --no-password --profile root-ca
+	step certificate create root-ca ./certs/ca.crt ./certs/ca.key --insecure --no-password --profile root-ca --san localhost
+	step certificate create intermediate-ca ./certs/intermediate.crt ./certs/intermediate.key --insecure --no-password --profile intermediate-ca --san localhost --ca ./certs/ca.crt --ca-key ./certs/ca.key
 
 cert-prometheus:
-	step certificate create prometheus ./certs/prometheus.crt ./certs/prometheus.key --san localhost --insecure --no-password --ca ./certs/ca.crt --ca-key ./certs/ca.key
+	step certificate create prometheus ./certs/prometheus.crt ./certs/prometheus.key --san localhost --insecure --no-password --ca ./certs/intermediate.crt --ca-key ./certs/intermediate.key --bundle
 
 cert-prom-client:
-	step certificate create prom-client ./certs/prom-client.crt ./certs/prom-client.key --insecure --no-password --ca ./certs/ca.crt --ca-key ./certs/ca.key
+	step certificate create prom-client ./certs/prom-client.crt ./certs/prom-client.key --insecure --no-password --ca ./certs/intermediate.crt --ca-key ./certs/intermediate.key --bundle
+	step certificate p12 ./certs/prom-client.p12 ./certs/prom-client.crt ./certs/prom-client.key --ca ./certs/intermediate.crt --no-password --insecure
 
 certs: cert-ca cert-prometheus cert-prom-client

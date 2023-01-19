@@ -65,6 +65,7 @@ Sorted alphabetically:
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)
 - [python<=3.10](https://www.python.org/downloads/)
 - [supervisord](http://supervisord.org/)
+- [step cli](https://smallstep.com/docs/step-cli/installation)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) [optional]
 
 ## Quick Start
