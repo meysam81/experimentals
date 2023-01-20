@@ -77,7 +77,7 @@ async def login(request: Request, flow: str = None):
 
     logger.debug(f"{result.status_code} {result.text}")
 
-    if result.status_code == HTTPStatus.NOT_FOUND:
+    if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
@@ -146,7 +146,7 @@ async def verification(request: Request, flow: str = None, code: str = ""):
             cookies=request.cookies,
         )
 
-    if result.status_code == HTTPStatus.NOT_FOUND:
+    if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
 
     logger.debug(f"{result.status_code} {result.text}")
@@ -216,7 +216,7 @@ async def registration(request: Request, flow: str = None):
 
     logger.debug(f"{result.status_code} {result.text}")
 
-    if result.status_code == HTTPStatus.NOT_FOUND:
+    if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
@@ -315,7 +315,7 @@ async def recovery(request: Request, flow: str = None):
 
     logger.debug(f"{result.status_code} {result.text}")
 
-    if result.status_code == HTTPStatus.NOT_FOUND:
+    if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
@@ -382,7 +382,7 @@ async def profile(request: Request, flow: str = None):
 
     logger.debug(f"{result.status_code} {result.text}")
 
-    if result.status_code == HTTPStatus.NOT_FOUND:
+    if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
@@ -446,7 +446,7 @@ async def profile(request: Request, flow: str = None):
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse(STATIC / "favicon.jpeg")
+    return FileResponse(STATIC / "favicon.jpeg", media_type="image/jpeg")
 
 
 if __name__ == "__main__":
