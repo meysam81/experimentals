@@ -20,7 +20,6 @@ selfservice:
     password:
       enabled: true
     oidc:
-    oidc:
       config:
         providers:
           - id: google # this is `<provider-id>` in the Authorization callback URL. DO NOT CHANGE IT ONCE SET!
@@ -91,9 +90,9 @@ selfservice:
     login:
       ui_url: http://127.0.0.1:4455/login
       lifespan: 10m
-      after:
-        hooks:
-        - hook: require_verified_address
+      # after:
+      #   hooks:
+      #   - hook: require_verified_address
 
     registration:
       lifespan: 10m

@@ -25,21 +25,17 @@
 
       <div class="field">
         <label for="{{ input.id }}">{{ input.label }}</label>
-        {% if input.required %} {% endif %}
+        {% if input.required %}
+        <span class="required">*</span>
+        {% endif %}
         <input
           type="{{ input.type }}"
           name="{{ input.id }}"
-          {%
-          if
-          input.required
-          %}
-          required
-          {%
-          endif
-          %}
         />
       </div>
-      {% endif %} {% endfor %}
+      {% endif %} 
+      <br/>
+      {% endfor %}
     </form>
   </body>
 </html>
