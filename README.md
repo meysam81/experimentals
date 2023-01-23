@@ -61,6 +61,7 @@ Sorted alphabetically:
 - [jq](https://stedolan.github.io/jq/download/)
 - [kratos](https://github.com/ory/kratos/releases)
 - [node-exporter](https://prometheus.io/download/#node_exporter)
+- [oathkeeper](https://github.com/ory/oathkeeper/releases)
 - [prometheus & promtool](https://prometheus.io/download/#prometheus)
 - [promlens](https://prometheus.io/download/#promlens) [optional]
 - [protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation)

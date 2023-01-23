@@ -1,0 +1,60 @@
+- authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  id: allow-anonymous-with-header-mutator
+  match:
+    methods:
+      - GET
+    url: http://<127.0.0.1|localhost>:4455/anything/header
+  mutators:
+    - config:
+        headers:
+          X-User: "{{ print .Subject }}"
+      handler: header
+  upstream:
+    url: https://httpbin.org/anything/header
+  version: v0.40.1
+- authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: deny
+  errors:
+    - config:
+        when:
+          - request:
+              header:
+                accept:
+                  - application/json
+      handler: json
+    - config:
+        when:
+          - request:
+              header:
+                accept:
+                  - text/*
+      handler: redirect
+  id: deny-anonymous
+  match:
+    methods:
+      - GET
+    url: http://<127.0.0.1|localhost>:4455/anything/deny
+  mutators:
+    - handler: noop
+  upstream:
+    url: https://httpbin.org/anything/deny
+  version: v0.40.1
+- authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  id: allow-anonymous-with-id-token-mutator
+  match:
+    methods:
+      - GET
+    url: http://<127.0.0.1|localhost>:4455/anything/id_token
+  mutators:
+    - handler: id_token
+  upstream:
+    url: https://httpbin.org/anything/id_token
+  version: v0.40.1
