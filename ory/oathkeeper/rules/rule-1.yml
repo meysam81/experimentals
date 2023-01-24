@@ -1,0 +1,144 @@
+- authenticators:
+    - handler: noop
+  authorizer:
+    handler: allow
+  id: noop-authenticator
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/noop
+  mutators:
+    - handler: noop
+  upstream:
+    url: http://localhost:8080
+
+- authenticators:
+    - handler: unauthorized
+  authorizer:
+    handler: allow
+  id: unauthorized-authenticator
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/unauthorized
+  mutators:
+    - handler: noop
+  upstream:
+    url: http://localhost:8080
+
+- authenticators:
+    - handler: anonymous
+      config:
+        subject: anonymous
+  authorizer:
+    handler: allow
+  id: anonymous-authenticator
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/anonymous
+  mutators:
+    - handler: header
+  upstream:
+    url: http://localhost:8080
+
+- authenticators:
+    - config:
+        preserve_path: true
+        force_method: GET
+      handler: cookie_session
+  authorizer:
+    handler: allow
+  id: allow-cookie-session
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>:4457/<(?!favicon.ico|login).*>
+  mutators:
+    - handler: header
+  upstream:
+    url: http://127.0.0.1:4455
+
+- authenticators:
+    - handler: noop
+  authorizer:
+    handler: allow
+  id: allow-anon
+  match:
+    methods:
+      - GET
+    url: http://<127.0.0.1|localhost>:4457/<(favicon.ico|login).*>
+  mutators:
+    - handler: header
+  upstream:
+    url: http://127.0.0.1:4455/
+
+- authenticators:
+    - handler: bearer_token
+  authorizer:
+    handler: allow
+  id: allow-bearer-token
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/bearer_token
+  mutators:
+    - handler: header
+  upstream:
+    url: http://localhost:8080
+
+- authenticators:
+    - handler: oauth2_client_credentials
+  authorizer:
+    handler: allow
+  id: allow-oauth2-client-credentials
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/oauth2
+  mutators:
+    - handler: header
+  upstream:
+    url: http://localhost:8080
+
+- authenticators:
+    - handler: jwt
+  authorizer:
+    handler: allow
+  id: allow-jwt
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/jwt
+  mutators:
+    - handler: header
+  upstream:
+    url: http://localhost:8080

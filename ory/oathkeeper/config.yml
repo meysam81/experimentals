@@ -1,48 +1,96 @@
-serve:
-  proxy:
-    port: 4457 # run the proxy at port 4455
-  api:
-    port: 4456 # run the api at port 4456
-
 access_rules:
+  matching_strategy: regexp
   repositories:
-    - file://./ory/oathkeeper/rules/oathkeeper.yml
-
-errors:
-  fallback:
-    - json
-  handlers:
-    json:
-      enabled: true
-      config:
-        verbose: true
-    redirect:
-      enabled: true
-      config:
-        to: https://www.ory.sh/docs
-
-mutators:
-  header:
-    enabled: true
+    - file://./ory/oathkeeper/rules/rule-1.yml
+authenticators:
+  anonymous:
     config:
-      headers:
-        X-User: "{{ print .Subject }}"
+      subject: anonymous
+    enabled: true
+  bearer_token:
+    config:
+      check_session_url: http://127.0.0.1:9200/jwt
+      force_method: GET
+      forward_http_headers:
+        - cookie
+      preserve_path: true
+      preserve_query: true
+      token_from:
+        # header: authorization
+        # cookie: jwt
+        query_parameter: jwt
+    enabled: true
+  cookie_session:
+    config:
+      # check_session_url: http://127.0.0.1:9200/cookie
+      check_session_url: http://127.0.0.1:4433/sessions/whoami
+      extra_from: "@this"
+      only:
+        - ory_kratos_session
+      preserve_path: true
+      subject_from: identity.id
+    enabled: true
+  jwt:
+    config:
+      allowed_algorithms:
+        - RS256
+        - HS256
+      jwks_urls:
+        - http://127.0.0.1:9200/.well-known/jwks.json
+      required_scope:
+        - openid
+        - offline
+      scope_strategy: hierarchic
+      trusted_issuers:
+        - http://127.0.0.1:9200
+    enabled: true
   noop:
     enabled: true
-  id_token:
-    enabled: true
+  oauth2_client_credentials:
     config:
-      issuer_url: http://localhost:4455/
-      jwks_url: file:///jwks.json
-
+      cache:
+        enabled: true
+        max_tokens: 100
+        ttl: 10m
+      token_url: http://127.0.0.1:9200/oauth2
+    enabled: true
+  unauthorized:
+    enabled: true
 authorizers:
   allow:
     enabled: true
   deny:
     enabled: true
-
-authenticators:
-  anonymous:
-    enabled: true
+errors:
+  fallback:
+    - json
+  handlers:
+    json:
+      config:
+        verbose: true
+      enabled: true
+    redirect:
+      config:
+        to: https://www.ory.sh/docs
+      enabled: true
+log:
+  leak_sensitive_values: true
+  level: debug
+mutators:
+  header:
     config:
-      subject: guest
+      headers:
+        X-User: "{{ print .Subject }}"
+    enabled: true
+  id_token:
+    config:
+      issuer_url: http://localhost:4455/
+      jwks_url: file://./ory/oathkeeper/jwks.json
+    enabled: true
+  noop:
+    enabled: true
+serve:
+  api:
+    port: 4456
+  proxy:
+    port: 4457

@@ -12,9 +12,9 @@ serve:
     base_url: http://127.0.0.1:4434/
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:4455/
+  default_browser_return_url: http://127.0.0.1:4457/
   allowed_return_urls:
-    - http://127.0.0.1:4455
+    - http://127.0.0.1:4457
 
   methods:
     password:
@@ -70,36 +70,36 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://127.0.0.1:4455/error
+      ui_url: http://127.0.0.1:4457/error
 
     settings:
-      ui_url: http://127.0.0.1:4455/settings
+      ui_url: http://127.0.0.1:4457/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: http://127.0.0.1:4455/recovery
+      ui_url: http://127.0.0.1:4457/recovery
       use: code
       after:
-        default_browser_return_url: http://127.0.0.1:4455/verification
+        default_browser_return_url: http://127.0.0.1:4457/verification
         hooks:
         - hook: revoke_active_sessions
 
     verification:
       enabled: true
-      ui_url: http://127.0.0.1:4455/verification
+      ui_url: http://127.0.0.1:4457/verification
       use: code
       lifespan: 10m
       after:
-        default_browser_return_url: http://127.0.0.1:4455/login
+        default_browser_return_url: http://127.0.0.1:4457/login
 
     logout:
       after:
-        default_browser_return_url: http://127.0.0.1:4455/
+        default_browser_return_url: http://127.0.0.1:4457/
 
     login:
-      ui_url: http://127.0.0.1:4455/login
+      ui_url: http://127.0.0.1:4457/login
       lifespan: 10m
       # after:
       #   hooks:
@@ -107,9 +107,9 @@ selfservice:
 
     registration:
       lifespan: 10m
-      ui_url: http://127.0.0.1:4455/registration
+      ui_url: http://127.0.0.1:4457/registration
       after:
-        default_browser_return_url: http://127.0.0.1:4455/verification
+        default_browser_return_url: http://127.0.0.1:4457/verification
         # password:
         #   hooks:
         #     - hook: session
