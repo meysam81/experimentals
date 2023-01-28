@@ -1,8 +1,9 @@
 import os
 
-import dramatiq
 from app.logger import get_logger
 from dramatiq.results import Results
+
+import dramatiq
 
 logger = get_logger(__name__)
 
