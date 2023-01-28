@@ -5,7 +5,7 @@ access_rules:
 authenticators:
   anonymous:
     config:
-      subject: anonymous
+      subject: guest
     enabled: true
   bearer_token:
     config:

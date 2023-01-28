@@ -201,6 +201,6 @@ grafana-api-token-file.txt
 
 .python-version
 
-certs/*
+prometheus/certs/*
 data-agent
 playground.ipynb

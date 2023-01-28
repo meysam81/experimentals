@@ -56,6 +56,26 @@
 
 - authenticators:
     - config:
+        subject: guest
+      handler: anonymous
+  authorizer:
+    handler: allow
+  id: allow-guest
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>:4457/<(login|recovery|verification|registration)?>
+  mutators:
+    - handler: header
+  upstream:
+    url: http://127.0.0.1:4455
+
+- authenticators:
+    - config:
         preserve_path: true
         force_method: GET
       handler: cookie_session
@@ -69,25 +89,11 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>:4457/<(?!favicon.ico|login).*>
+    url: http://<127.0.0.1|localhost>:4457/<(?!login|recovery|verification|registration).+>
   mutators:
     - handler: header
   upstream:
     url: http://127.0.0.1:4455
-
-- authenticators:
-    - handler: noop
-  authorizer:
-    handler: allow
-  id: allow-anon
-  match:
-    methods:
-      - GET
-    url: http://<127.0.0.1|localhost>:4457/<(favicon.ico|login).*>
-  mutators:
-    - handler: header
-  upstream:
-    url: http://127.0.0.1:4455/
 
 - authenticators:
     - handler: bearer_token
