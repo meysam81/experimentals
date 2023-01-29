@@ -1,0 +1,7 @@
+- targets:
+    - localhost:9550
+    - localhost:9560
+  labels:
+    job: oathkeeper
+    lang: go
+    type: proxy
