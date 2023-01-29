@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Run linters
         run: |
@@ -24,7 +24,7 @@ jobs:
 
       - name: Commit linting changes
         if: failure()
-        uses: EndBug/add-and-commit@v9.1.0
+        uses: EndBug/add-and-commit@v9
         with:
           message: "chore: lint 🚨"
           new_branch: ${{ github.head_ref || github.ref_name }}
