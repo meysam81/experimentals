@@ -152,3 +152,25 @@
     - handler: header
   upstream:
     url: http://localhost:9300
+
+- authenticators:
+    - handler: jwt
+  authorizer:
+    handler: remote
+    config:
+      remote: http://127.0.0.1:9400/authorize
+      headers:
+        X-Subject: "{{ print .Subject }}"
+  id: authorize-requests
+  match:
+    methods:
+      - GET
+      - POST
+      - PATCH
+      - PUT
+      - DELETE
+    url: http://<127.0.0.1|localhost>/authorize
+  mutators:
+    - handler: header
+  upstream:
+    url: http://localhost:9300

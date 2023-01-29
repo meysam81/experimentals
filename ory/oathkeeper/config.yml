@@ -62,6 +62,12 @@ authorizers:
     enabled: true
   deny:
     enabled: true
+  remote:
+    enabled: true
+    config:
+      remote: http://127.0.0.1:9400/authorize
+  remote_json:
+    enabled: false
 errors:
   fallback:
     - json
