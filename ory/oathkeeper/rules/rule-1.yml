@@ -14,7 +14,7 @@
   mutators:
     - handler: noop
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
 
 - authenticators:
     - handler: unauthorized
@@ -32,7 +32,7 @@
   mutators:
     - handler: noop
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
 
 - authenticators:
     - handler: anonymous
@@ -52,7 +52,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
 
 - authenticators:
     - config:
@@ -90,6 +90,10 @@
       - PUT
       - DELETE
     url: http://<127.0.0.1|localhost>:4457/<(?!login|recovery|verification|registration|favicon.ico).+>
+  errors:
+    - handler: redirect
+      config:
+        to: http://127.0.0.1:4457/login?return_to=/
   mutators:
     - handler: header
   upstream:
@@ -111,7 +115,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
 
 - authenticators:
     - handler: oauth2_client_credentials
@@ -129,7 +133,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
 
 - authenticators:
     - handler: jwt
@@ -147,4 +151,4 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:8080
+    url: http://localhost:9300
