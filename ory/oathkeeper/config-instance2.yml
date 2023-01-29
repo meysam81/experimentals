@@ -9,20 +9,20 @@ authenticators:
     enabled: true
   bearer_token:
     config:
-      check_session_url: http://127.0.0.1:9200/jwt
+      check_session_url: http://localhost:9200/jwt
       force_method: GET
       forward_http_headers:
         - cookie
       preserve_path: true
       preserve_query: true
       token_from:
-        # header: authorization
+        header: authorization
         # cookie: jwt
-        query_parameter: jwt
+        # query_parameter: jwt
     enabled: true
   cookie_session:
     config:
-      # check_session_url: http://127.0.0.1:9200/cookie
+      # check_session_url: http://localhost:9200/cookie
       check_session_url: http://127.0.0.1:4433/sessions/whoami
       extra_from: "@this"
       only:
@@ -37,13 +37,13 @@ authenticators:
         - HS256
         - RS384
       jwks_urls:
-        - http://127.0.0.1:9200/.well-known/jwks.json
+        - http://localhost:9200/.well-known/jwks.json
       required_scope:
         - openid
         - offline
       scope_strategy: hierarchic
       trusted_issuers:
-        - http://127.0.0.1:9200
+        - http://localhost:9200
     enabled: true
   noop:
     enabled: true
@@ -53,7 +53,7 @@ authenticators:
         enabled: true
         max_tokens: 100
         ttl: 10m
-      token_url: http://127.0.0.1:9200/oauth2
+      token_url: http://localhost:9200/oauth2
     enabled: true
   unauthorized:
     enabled: true
@@ -65,7 +65,7 @@ authorizers:
   remote:
     enabled: true
     config:
-      remote: http://127.0.0.1:9400/authorize
+      remote: http://localhost:9400/authorize
   remote_json:
     enabled: false
 errors:
@@ -91,13 +91,15 @@ mutators:
     enabled: true
   id_token:
     config:
-      issuer_url: http://localhost:4455/
-      jwks_url: file://./ory/oathkeeper/jwks.json
+      issuer_url: http://127.0.0.1:4455/
+      jwks_url: file://./ory/oathkeeper/session-store/keys/jwks.pub.json
     enabled: true
   noop:
     enabled: true
 serve:
   api:
-    port: 4456
+    port: 4459
   proxy:
-    port: 4457
+    port: 4458
+  prometheus:
+    port: 9560

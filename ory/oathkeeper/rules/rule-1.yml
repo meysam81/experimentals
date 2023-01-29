@@ -10,7 +10,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/noop
+    url: http://ory.localhost/noop
   mutators:
     - handler: noop
   upstream:
@@ -28,7 +28,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/unauthorized
+    url: http://ory.localhost/unauthorized
   mutators:
     - handler: noop
   upstream:
@@ -48,7 +48,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/anonymous
+    url: http://ory.localhost/anonymous
   mutators:
     - handler: header
   upstream:
@@ -68,7 +68,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>:4457/<(login|recovery|verification|registration|favicon.ico)?>
+    url: http://127.0.0.1:<4457|8080>/<(login|recovery|verification|registration|favicon.ico)?>
   mutators:
     - handler: header
   upstream:
@@ -89,7 +89,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>:4457/<(?!login|recovery|verification|registration|favicon.ico).+>
+    url: http://127.0.0.1:<4457|8080>/<(?!login|recovery|verification|registration|favicon.ico).+>
   errors:
     - handler: redirect
       config:
@@ -111,7 +111,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/bearer_token
+    url: http://ory.localhost:8080/bearer_token
   mutators:
     - handler: header
   upstream:
@@ -129,7 +129,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/oauth2
+    url: http://ory.localhost:8080/oauth2
   mutators:
     - handler: header
   upstream:
@@ -147,7 +147,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/jwt
+    url: http://ory.localhost:8080/jwt
   mutators:
     - handler: header
   upstream:
@@ -158,7 +158,7 @@
   authorizer:
     handler: remote
     config:
-      remote: http://127.0.0.1:9400/authorize
+      remote: http://localhost:9400/authorize
       headers:
         X-Subject: "{{ print .Subject }}"
   id: authorize-requests
@@ -169,7 +169,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>/authorize
+    url: http://ory.localhost:8080/authorize
   mutators:
     - handler: header
   upstream:
