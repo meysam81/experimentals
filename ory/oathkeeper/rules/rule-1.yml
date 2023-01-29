@@ -10,7 +10,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://ory.localhost/noop
+    url: http://ory.localhost:8080/noop
   mutators:
     - handler: noop
   upstream:
@@ -28,7 +28,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://ory.localhost/unauthorized
+    url: http://ory.localhost:8080/unauthorized
   mutators:
     - handler: noop
   upstream:
@@ -48,7 +48,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://ory.localhost/anonymous
+    url: http://ory.localhost:8080/anonymous
   mutators:
     - handler: header
   upstream:
@@ -60,7 +60,7 @@
       handler: anonymous
   authorizer:
     handler: allow
-  id: allow-guest
+  id: kratos-client-unauth-routes
   match:
     methods:
       - GET
@@ -155,6 +155,7 @@
 
 - authenticators:
     - handler: jwt
+    - handler: cookie_session
   authorizer:
     handler: remote
     config:
