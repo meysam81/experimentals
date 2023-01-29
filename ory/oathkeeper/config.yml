@@ -35,6 +35,7 @@ authenticators:
       allowed_algorithms:
         - RS256
         - HS256
+        - RS384
       jwks_urls:
         - http://127.0.0.1:9200/.well-known/jwks.json
       required_scope:

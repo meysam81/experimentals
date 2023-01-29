@@ -2,17 +2,26 @@ import sys
 from base64 import b64decode
 from pathlib import Path
 
+import httpx
 import jwt
+from config import settings
 from fastapi import Cookie, FastAPI, Header, Query, Request, Response
+from logger import get_logger
 
 app = FastAPI()
 
 HERE = Path(__file__).parent
+logger = get_logger(__name__)
 
 
 @app.get("/cookie")
-async def cookie_(request: Request, session: str = Cookie("")):
-    passing = session == "valid"
+async def cookie_(request: Request):
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f"{settings.KRATOS_PUBLIC_URL}/sessions/whoami",
+            cookies=request.cookies,
+        )
+    passing = res.status_code == 200
     print(request.headers, request.cookies, passing)
     if not passing:
         return Response(status_code=401)
@@ -55,30 +64,19 @@ async def oauth2_(request: Request, authorization: str = Header("")):
     return {"access_token": jwt.encode({"sub": "foo"}, "secret")}
 
 
-# an endpoint for the jwks endpoint
 @app.get("/.well-known/jwks.json")
 async def jwks():
-    return {
-        "keys": [
-            {
-                "kty": "oct",
-                "alg": "HS256",
-                "use": "sig",
-                "kid": "valid",
-                "k": "c2VjcmV0",
-            },
-            {
-                "kty": "oct",
-                "alg": "HS256",
-                "use": "sig",
-                "kid": "invalid",
-                "k": "c2VjcmV0",
-            },
-        ]
-    }
+    KEYS = {"keys": [settings.jwk_pubkey]}
+    return KEYS
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=9200, reload=True, reload_dirs=[HERE])
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        reload_dirs=[HERE],
+    )

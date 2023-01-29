@@ -68,7 +68,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>:4457/<(login|recovery|verification|registration)?>
+    url: http://<127.0.0.1|localhost>:4457/<(login|recovery|verification|registration|favicon.ico)?>
   mutators:
     - handler: header
   upstream:
@@ -89,7 +89,7 @@
       - PATCH
       - PUT
       - DELETE
-    url: http://<127.0.0.1|localhost>:4457/<(?!login|recovery|verification|registration).+>
+    url: http://<127.0.0.1|localhost>:4457/<(?!login|recovery|verification|registration|favicon.ico).+>
   mutators:
     - handler: header
   upstream:
