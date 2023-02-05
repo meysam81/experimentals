@@ -205,3 +205,4 @@ prometheus/certs/*
 data-agent
 playground.ipynb
 ory/oathkeeper/session-store/keys/*
+persistent

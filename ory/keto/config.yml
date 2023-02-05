@@ -1,0 +1,24 @@
+dsn: sqlite://./persistent/keto.db?_fk=true
+log:
+  leak_sensitive_values: true
+  level: debug
+namespaces:
+  - id: 0
+    name: resources
+  - id: 1
+    name: groups
+serve:
+  metrics:
+    port: 4468
+  read:
+    port: 4466
+  write:
+    port: 4467
+tracing:
+  provider: jaeger
+  providers:
+    jaeger:
+      local_agent_address: 127.0.0.1:6831
+      sampling:
+        server_url: http://localhost:5778/sampling
+  service_name: Ory Keto

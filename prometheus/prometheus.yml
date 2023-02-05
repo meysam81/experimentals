@@ -60,6 +60,13 @@ scrape_configs:
       - url: http://localhost:1323
         refresh_interval: "60s"
 
+  - job_name: "ory"
+    metrics_path: /metrics/prometheus
+    file_sd_configs:
+      - files:
+          - ./targets/oathkeeper.yml
+          - ./targets/kratos.yml
+
 rule_files:
   - ./rules/*.alerts.yml
   - ./rules/*.rules.yml

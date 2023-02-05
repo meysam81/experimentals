@@ -36,7 +36,7 @@ run-supervisor:
 update-supervisord:
 	supervisorctl -c ./supervisord/supervisord.conf update
 
-reload-supervisord: build-golang
+reload-supervisord:
 	supervisorctl -c ./supervisord/supervisord.conf reload
 
 install-requirements-python-client:
@@ -108,7 +108,7 @@ add-etcd-ip-addrs:
 	sudo ip a add 172.16.0.20/24 dev lo || true
 	sudo ip a add 172.16.0.30/24 dev lo	|| true
 
-prometheus-reload:
+reload-prometheus:
 	curl -X POST http://localhost:9090/-/reload
 
 create-grafana-api-token-file: apikey := promlens

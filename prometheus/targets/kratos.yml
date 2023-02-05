@@ -1,0 +1,7 @@
+- targets:
+    - localhost:4434
+  labels:
+    org: ory
+    job: kratos
+    lang: go
+    type: identity-provider

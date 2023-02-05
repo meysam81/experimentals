@@ -1,6 +1,6 @@
 version: v0.11.0
 
-dsn: postgres://kratos:kratos@localhost:5432/kratos?sslmode=disable
+dsn: sqlite://./persistent/kratos.db?_fk=true
 
 serve:
   public:
