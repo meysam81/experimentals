@@ -9,10 +9,30 @@ alerting:
             - localhost:9093
 
 scrape_configs:
-  - job_name: localhost
+  - job_name: dramatiq
     file_sd_configs:
       - files:
-          - ./targets/*.yml
+          - ./targets/dramatiq/*.yml
+
+  - job_name: haproxy
+    file_sd_configs:
+      - files:
+          - ./targets/haproxy/*.yml
+
+  - job_name: kafka
+    file_sd_configs:
+      - files:
+          - ./targets/kafka/*.yml
+
+  - job_name: prometheus
+    file_sd_configs:
+      - files:
+          - ./targets/prometheus/*.yml
+
+  - job_name: grpc
+    file_sd_configs:
+      - files:
+          - ./targets/grpc/*.yml
 
   - job_name: docker
     docker_sd_configs:
@@ -57,15 +77,17 @@ scrape_configs:
 
   - job_name: "dynamics"
     http_sd_configs:
-      - url: http://localhost:1323
+      - url: http://localhost:50300
         refresh_interval: "60s"
 
   - job_name: "ory"
     metrics_path: /metrics/prometheus
+    scrape_interval: 1m
     file_sd_configs:
       - files:
-          - ./targets/oathkeeper.yml
-          - ./targets/kratos.yml
+          - ./targets/ory/oathkeeper.yml
+          - ./targets/ory/kratos.yml
+          - ./targets/ory/keto.yml
 
 rule_files:
   - ./rules/*.alerts.yml

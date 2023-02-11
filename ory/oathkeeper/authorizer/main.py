@@ -1,8 +1,10 @@
+from http import HTTPStatus
 from pathlib import Path
+from pprint import pformat
 
+from base_utils import get_logger
 from config import settings
-from fastapi import FastAPI, Request
-from logger import get_logger
+from fastapi import FastAPI, Request, Response
 
 app = FastAPI()
 
@@ -12,9 +14,15 @@ logger = get_logger(__name__)
 
 @app.post("/authorize")
 async def authorize(request: Request):
-    logger.info((request.headers, request.cookies, request.query_params))
-    logger.info((await request.body(),))
-    return 200
+    headers = pformat(dict(request.headers))
+    cookies = pformat(dict(request.cookies))
+    query_params = pformat(dict(request.query_params))
+
+    for info in (headers, cookies, query_params):
+        logger.info(info)
+    logger.info(await request.body())
+
+    return Response(status_code=HTTPStatus.OK)
 
 
 if __name__ == "__main__":

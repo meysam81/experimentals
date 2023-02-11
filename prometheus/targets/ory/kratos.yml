@@ -1,5 +1,5 @@
 - targets:
-    - localhost:4434
+    - localhost:40901
   labels:
     org: ory
     job: kratos

@@ -1,0 +1,29 @@
+- targets:
+    - localhost:50400
+    - localhost:50401
+    - localhost:50402
+    - localhost:50403
+    - localhost:50404
+    - localhost:50405
+    - localhost:50406
+    - localhost:50407
+    - localhost:50408
+    - localhost:50409
+  labels:
+    job: grpc-client
+    lang: golang
+
+- targets:
+    - localhost:50500
+    - localhost:50501
+    - localhost:50502
+    - localhost:50503
+    - localhost:50504
+    - localhost:50505
+    - localhost:50506
+    - localhost:50507
+    - localhost:50508
+    - localhost:50509
+  labels:
+    job: grpc-client
+    lang: python

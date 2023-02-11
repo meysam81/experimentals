@@ -1,14 +1,4 @@
-from enum import Enum
-
-from pydantic import BaseSettings, root_validator
-
-
-class LogLevel(str, Enum):
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+from base_utils import BaseSettings, LogLevel, root_validator
 
 
 class Settings(BaseSettings):

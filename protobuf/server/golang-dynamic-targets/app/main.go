@@ -2,9 +2,18 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 )
+
+func getEnv(key, fallback string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		value = fallback
+	}
+	return value
+}
 
 func targets() []map[string]interface{} {
 	// 	[
@@ -28,11 +37,13 @@ func targets() []map[string]interface{} {
 }
 
 func main() {
+	port := getEnv("PORT", "1323")
+
 	e := echo.New()
 	// set log level to debug
 	e.Logger.SetLevel(1)
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, targets())
 	})
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":" + port))
 }

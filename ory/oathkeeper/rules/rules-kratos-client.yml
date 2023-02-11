@@ -14,7 +14,7 @@
   mutators:
     - handler: noop
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - handler: unauthorized
@@ -32,7 +32,7 @@
   mutators:
     - handler: noop
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - handler: anonymous
@@ -52,7 +52,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - config:
@@ -115,7 +115,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - handler: oauth2_client_credentials
@@ -133,7 +133,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - handler: jwt
@@ -151,7 +151,7 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700
 
 - authenticators:
     - handler: jwt
@@ -159,7 +159,7 @@
   authorizer:
     handler: remote
     config:
-      remote: http://localhost:9400/authorize
+      remote: http://localhost:40600/authorize
       headers:
         X-Subject: "{{ print .Subject }}"
   id: authorize-requests
@@ -174,4 +174,4 @@
   mutators:
     - handler: header
   upstream:
-    url: http://localhost:9300
+    url: http://localhost:40700

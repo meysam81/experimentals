@@ -9,6 +9,7 @@ namespaces:
     name: groups
 serve:
   metrics:
+    host: localhost
     port: 4468
   read:
     port: 4466

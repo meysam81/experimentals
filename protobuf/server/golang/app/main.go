@@ -17,7 +17,7 @@ import (
 var (
 	port = getEnv("PORT", "50051")
 	// metrics port is 400 plus the last two digits of `port`
-	metricsPort = fmt.Sprintf("400%s", port[len(port)-2:])
+	metricsPort = getEnv("METRICS_PORT", fmt.Sprintf("400%s", port[len(port)-2:]))
 	grpcServer  *grpc.Server
 )
 

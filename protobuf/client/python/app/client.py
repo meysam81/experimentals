@@ -1,6 +1,6 @@
 import grpc
 from app.config import config
-from app.logger import get_logger
+from base_utils import get_logger
 from proto_files import greetings_pb2, greetings_pb2_grpc
 
 logger = get_logger(__name__)
@@ -13,7 +13,6 @@ def do_run(channel, name):
 
 
 def run(infinite=None, interceptors=set()):
-
     server_addr = config.SERVER_ADDRESS
 
     channel = grpc.intercept_channel(grpc.insecure_channel(server_addr), *interceptors)

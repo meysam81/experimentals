@@ -1,14 +1,15 @@
+import time
 from http import HTTPStatus
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import httpx
+from base_utils import get_logger
 from config import settings
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from logger import get_logger
 
 HERE = Path(__file__).parent
 STATIC = HERE / "static"
@@ -20,11 +21,49 @@ templates = Jinja2Templates(directory=TEMPLATES)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
+REDIRECT_STATUSES = [
+    HTTPStatus.SEE_OTHER,
+    HTTPStatus.TEMPORARY_REDIRECT,
+    HTTPStatus.PERMANENT_REDIRECT,
+    HTTPStatus.FOUND,
+]
+
+
+@app.middleware("http")
+async def return_to_query_param_middleware(request: Request, call_next):
+    response: Response = await call_next(request)
+    params = {}
+    if return_to := request.query_params.get("return_to"):
+        params["return_to"] = return_to
+    if response.status_code in REDIRECT_STATUSES:
+        qp = urlencode(params)
+        response.headers["Location"] = f"{response.headers['Location']}?{qp}"
+    return response
+
+
+@app.middleware("http")
+async def timing_middleware(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    if request.query_params:
+        request_info = f"{request.method} {request.url}?{request.query_params}"
+    else:
+        request_info = f"{request.method} {request.url}"
+    logger.info(f"{request_info} - {process_time:.2f}s")
+    return response
+
+
 @app.get("/error")
 async def error(request: Request):
     logger.error(request.headers)
     logger.error(await request.body())
     return {"message": "Error"}
+
+
+@app.get("/healthz")
+async def health():
+    return {"message": "OK"}
 
 
 @app.get(
@@ -38,7 +77,7 @@ async def error(request: Request):
         },
     },
 )
-async def index(request: Request):
+async def index(request: Request, return_to: str = None):
     async with httpx.AsyncClient() as client:
         result = await client.get(
             urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
@@ -82,7 +121,10 @@ async def login(request: Request, flow: str = None):
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
 
+    logger.debug(f"{result.status_code} {result.text}")
+
     json_ = result.json()
+
     inputs = []
     csrf_token = None
     for input_ in json_["ui"]["nodes"]:
@@ -114,6 +156,9 @@ async def login(request: Request, flow: str = None):
     )
     for cookie, value in request.cookies.items():
         response.set_cookie(cookie, value)
+
+    if return_to := json_.get("return_to"):
+        response.headers["Location"] = return_to
 
     return response
 
@@ -451,6 +496,8 @@ async def favicon():
 
 if __name__ == "__main__":
     import uvicorn
+
+    logger.info(f"Listening on {settings.HOST}:{settings.PORT}")
 
     uvicorn.run(
         "main:app",

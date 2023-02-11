@@ -1,6 +1,6 @@
 import os
 
-from app.logger import get_logger
+from base_utils import get_logger
 
 import dramatiq
 

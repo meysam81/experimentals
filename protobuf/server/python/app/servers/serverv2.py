@@ -1,4 +1,4 @@
-from app.logger import get_logger
+from base_utils import get_logger
 from proto_files.v2 import healthcheck_pb2, healthcheck_pb2_grpc
 
 logger = get_logger(__name__)

@@ -1,6 +1,6 @@
 - targets:
-    - localhost:9550
-    - localhost:9560
+    - localhost:40400
+    - localhost:40401
   labels:
     org: ory
     job: oathkeeper

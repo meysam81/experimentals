@@ -1,0 +1,8 @@
+- targets:
+    - localhost:40710
+    - localhost:40711
+  labels:
+    org: ory
+    job: keto
+    lang: go
+    type: authorization-server

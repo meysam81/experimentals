@@ -1,7 +1,7 @@
 access_rules:
   matching_strategy: regexp
   repositories:
-    - file://./ory/oathkeeper/rules/rule-1.yml
+    - file://./ory/oathkeeper/rules/rules-bookstore.yml
 authenticators:
   anonymous:
     config:
@@ -9,7 +9,7 @@ authenticators:
     enabled: true
   bearer_token:
     config:
-      check_session_url: http://localhost:9200/jwt
+      check_session_url: http://localhost:40500/jwt
       force_method: GET
       forward_http_headers:
         - cookie
@@ -22,8 +22,7 @@ authenticators:
     enabled: true
   cookie_session:
     config:
-      # check_session_url: http://localhost:9200/cookie
-      check_session_url: http://127.0.0.1:4433/sessions/whoami
+      check_session_url: http://localhost:40900/sessions/whoami
       extra_from: "@this"
       only:
         - ory_kratos_session
@@ -37,14 +36,14 @@ authenticators:
         - HS256
         - RS384
       jwks_urls:
-        - http://localhost:9200/.well-known/jwks.json
+        - http://localhost:40500/.well-known/jwks.json
       required_scope:
         - openid
         - offline
       scope_strategy: hierarchic
       trusted_issuers:
-        - http://localhost:9200
-        - http://127.0.0.1:9200
+        - http://localhost:40500
+        - http://127.0.0.1:40500
     enabled: true
   noop:
     enabled: true
@@ -54,7 +53,7 @@ authenticators:
         enabled: true
         max_tokens: 100
         ttl: 10m
-      token_url: http://localhost:9200/oauth2
+      token_url: http://localhost:40500/oauth2
     enabled: true
   unauthorized:
     enabled: true
@@ -66,7 +65,7 @@ authorizers:
   remote:
     enabled: true
     config:
-      remote: http://localhost:9400/authorize
+      remote: http://localhost:40600/authorize
   remote_json:
     enabled: false
 errors:
@@ -104,3 +103,12 @@ serve:
     port: 4457
   prometheus:
     port: 9550
+tracing:
+  service_name: Ory Oathkeeper
+  provider: jaeger
+  providers:
+    jaeger:
+      sampling:
+        server_url: http://localhost:5778/sampling
+      local_agent_address: 127.0.0.1:6831
+  

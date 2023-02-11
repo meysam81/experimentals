@@ -1,15 +1,6 @@
 import json
-from enum import Enum
 
-from pydantic import BaseSettings, root_validator
-
-
-class LogLevel(str, Enum):
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+from base_utils import BaseSettings, LogLevel, root_validator
 
 
 class Settings(BaseSettings):
@@ -24,9 +15,8 @@ class Settings(BaseSettings):
     KRATOS_PUBLIC_URL: str = "http://127.0.0.1:4433"
 
     @root_validator
-    def validate_settings(cls, values):
-        if values["DEBUG"]:
-            values["LOG_LEVEL"] = "DEBUG"
+    def root_validator_(cls, values):
+        super().root_validator_(values)
         return values
 
     @property

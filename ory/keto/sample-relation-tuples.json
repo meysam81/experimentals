@@ -1,0 +1,28 @@
+[
+  {
+    "action": "insert",
+    "relation_tuple": {
+      "namespace": "resources",
+      "object": "Software Engineering at Google",
+      "relation": "edit-book",
+      "subject_set": {
+        "namespace": "groups",
+        "object": "O'Reilly",
+        "relation": "editor"
+      }
+    }
+  },
+  {
+    "action": "insert",
+    "relation_tuple": {
+      "namespace": "resources",
+      "object": "Software Engineering at Google",
+      "relation": "read-book",
+      "subject_set": {
+        "namespace": "groups",
+        "object": "library",
+        "relation": "member"
+      }
+    }
+  }
+]
