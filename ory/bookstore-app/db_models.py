@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 
@@ -22,3 +22,13 @@ class Publishers(Base):
     name = Column(String, index=True)
 
     books = relationship("Books", back_populates="publisher")
+
+
+class Members(Base):
+    __tablename__ = "members"
+
+    id = Column(String, primary_key=True, index=True)
+    subject_id = Column(String, index=True)
+    publisher_id = Column(Integer, ForeignKey("publishers.id"))
+
+    publisher = relationship("Publishers", back_populates="members")

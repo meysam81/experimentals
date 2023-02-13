@@ -20,7 +20,7 @@ async def authorize(request: Request):
 
     for info in (headers, cookies, query_params):
         logger.info(info)
-    logger.info(await request.body())
+    logger.info(pformat(await request.body()))
 
     return Response(status_code=HTTPStatus.OK)
 

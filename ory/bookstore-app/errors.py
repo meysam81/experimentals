@@ -32,3 +32,13 @@ class BookAlreadyExists(BaseException_):
 class PublisherAlreadyExists(BaseException_):
     http_status = HTTPStatus.CONFLICT
     error = "Publisher already exists"
+
+
+class PublisherHasBooks(BaseException_):
+    http_status = HTTPStatus.NOT_ACCEPTABLE
+    error = "Publisher has books, delete them first"
+
+
+class MemberAlreadyExists(BaseException_):
+    http_status = HTTPStatus.CONFLICT
+    error = "Member already exists"

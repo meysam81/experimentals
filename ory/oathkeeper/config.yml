@@ -17,15 +17,15 @@ authenticators:
       preserve_query: true
       token_from:
         header: authorization
-        # cookie: jwt
-        # query_parameter: jwt
     enabled: true
   cookie_session:
     config:
       check_session_url: http://localhost:40900/sessions/whoami
       extra_from: "@this"
-      only:
-        - ory_kratos_session
+      # only:
+      #   - ory_kratos_session
+      forward_http_headers:
+        - X-Session-Token
       preserve_path: true
       subject_from: identity.id
     enabled: true
@@ -47,14 +47,6 @@ authenticators:
     enabled: true
   noop:
     enabled: true
-  oauth2_client_credentials:
-    config:
-      cache:
-        enabled: true
-        max_tokens: 100
-        ttl: 10m
-      token_url: http://localhost:40500/oauth2
-    enabled: true
   unauthorized:
     enabled: true
 authorizers:
@@ -62,12 +54,11 @@ authorizers:
     enabled: true
   deny:
     enabled: true
-  remote:
-    enabled: true
-    config:
-      remote: http://localhost:40600/authorize
   remote_json:
-    enabled: false
+    config:
+      payload: ""
+      remote: http://localhost:40720/relation-tuples/check
+    enabled: true
 errors:
   fallback:
     - json
@@ -75,10 +66,17 @@ errors:
     json:
       config:
         verbose: true
+        when:
+          - error:
+              - forbidden
       enabled: true
     redirect:
       config:
-        to: https://www.ory.sh/docs
+        return_to_query_param: return_to
+        to: http://localhost:4455/login
+        when:
+          - error:
+              - unauthorized
       enabled: true
 log:
   leak_sensitive_values: true
@@ -87,28 +85,22 @@ mutators:
   header:
     config:
       headers:
-        X-User: "{{ print .Subject }}"
-    enabled: true
-  id_token:
-    config:
-      issuer_url: http://127.0.0.1:4455/
-      jwks_url: file://./ory/oathkeeper/session-store/keys/jwks.pub.json
+        X-Email: "{{ print .Extra.identity.traits.email }}"
     enabled: true
   noop:
     enabled: true
 serve:
   api:
     port: 4456
-  proxy:
-    port: 4457
   prometheus:
     port: 9550
+  proxy:
+    port: 4457
 tracing:
-  service_name: Ory Oathkeeper
   provider: jaeger
   providers:
     jaeger:
+      local_agent_address: 127.0.0.1:6831
       sampling:
         server_url: http://localhost:5778/sampling
-      local_agent_address: 127.0.0.1:6831
-  
+  service_name: Ory Oathkeeper

@@ -4,9 +4,9 @@ log:
   level: debug
 namespaces:
   - id: 0
-    name: resources
+    name: publishing
   - id: 1
-    name: groups
+    name: memberships
 serve:
   metrics:
     host: localhost

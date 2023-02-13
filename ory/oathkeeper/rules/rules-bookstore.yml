@@ -12,22 +12,12 @@
   match:
     methods:
       - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-    url: http://localhost:8080/
+    url: http://localhost:8080</?>
   errors:
     - handler: redirect
-      config:
-        to: http://localhost:4455/login
-        return_to_query_param: return_to
-        when:
-          - error:
-              - unauthorized
-              - forbidden
+    - handler: json
 
-- id: admin-facing
+- id: root-resources
   version: v1.0.0
   upstream:
     url: http://localhost:41000
@@ -35,15 +25,17 @@
   authenticators:
     - handler: cookie_session
   authorizer:
-    handler: remote
+    handler: remote_json
     config:
-      headers:
-        X-Subject: "{{ print .Extra.identity.traits.email }}"
-        X-URL: "{{ print .MatchContext.URL }}"
-        X-Method: "{{ print .MatchContext.Method }}"
-        X-Captured-Groups: "{{ print .MatchContext.RegexpCaptureGroups }}"
+      payload: |
+        {
+          "namespace": "resources",
+          "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 0 }}",
+          "relation": "{{ print .MatchContext.Method }}",
+          "subject_id": "{{ print .Subject }}"
+        }
   mutators:
-    - handler: noop
+    - handler: header
   match:
     methods:
       - GET
@@ -51,18 +43,12 @@
       - PUT
       - DELETE
       - PATCH
-    url: http://localhost:8080/<books/?>
+    url: http://localhost:8080/<books|publishers|members></?>
   errors:
     - handler: redirect
-      config:
-        to: http://localhost:4455/login
-        return_to_query_param: return_to
-        when:
-          - error:
-              - unauthorized
-              - forbidden
+    - handler: json
 
-- id: customer-facing
+- id: per-resource-authz
   version: v1.0.0
   upstream:
     url: http://localhost:41000
@@ -70,9 +56,17 @@
   authenticators:
     - handler: cookie_session
   authorizer:
-    handler: allow
+    handler: remote_json
+    config:
+      payload: |
+        {
+          "namespace": "publishing",
+          "object": "{{ printIndex .MatchContext.RegexpCaptureGroups 1 }}",
+          "relation": "{{ print .MatchContext.Method }}",
+          "subject_id": "{{ print .Subject }}"
+        }
   mutators:
-    - handler: noop
+    - handler: header
   match:
     methods:
       - GET
@@ -80,13 +74,7 @@
       - PUT
       - DELETE
       - PATCH
-    url: http://localhost:8080/<books>/<.+>
+    url: http://localhost:8080/<books|publishers|members>/<.*></?>
   errors:
     - handler: redirect
-      config:
-        to: http://localhost:4455/login
-        return_to_query_param: return_to
-        when:
-          - error:
-              - unauthorized
-              - forbidden
+    - handler: json

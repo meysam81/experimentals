@@ -36,4 +36,16 @@ class BookWriter(BaseBook):
 
 
 class BookReader(BaseBook, IdMixin):
-    publisher: "PublisherReader"
+    publisher: PublisherReader
+
+
+class BaseMember(BaseModel):
+    subject_id: str
+
+
+class MemberWriter(BaseMember):
+    publisher_id: str
+
+
+class MemberReader(BaseMember, IdMixin):
+    publisher: PublisherReader
