@@ -134,7 +134,6 @@ class AuthorizationServer:
 
             logger.info(f"{method_name} {url} {response.status_code}")
             logger.debug(pformat(response.headers))
-            logger.debug(pformat(response.json()))
 
             response.raise_for_status()
 
@@ -177,6 +176,7 @@ async def startup():
     authz = AuthorizationServer(
         read_url=config.KETO_READ_URL, write_url=config.KETO_WRITE_URL
     )
+    app.state.authz = authz
     await authz.ping()
 
 
@@ -393,8 +393,10 @@ async def update_book(
             updates.append(f"{key} = ${counter}")
             counter += 1
 
-        update_sql = "UPDATE books SET {updates} WHERE id = ${counter} RETURNING id, title, author, year, publisher_id".format(
-            updates=", ".join(updates), counter=counter
+        update_sql = (
+            "UPDATE books SET {updates} WHERE id = ${counter} RETURNING *".format(
+                updates=", ".join(updates), counter=counter
+            )
         )
         raw_result = await cursor.execute(update_sql, (*dictionary.values(), book_id))
 
@@ -607,9 +609,7 @@ async def delete_members(
     authz: AuthorizationServer = Depends(get_authz),
 ):
     async with db.cursor() as cursor:
-        raw_result = await cursor.execute(
-            "DELETE FROM members RETURNING subject_id, publisher_id"
-        )
+        raw_result = await cursor.execute("DELETE FROM members RETURNING *")
 
         members = await deserialize_from_db(raw_result, many=True)
 
@@ -636,7 +636,7 @@ async def delete_a_member(
 ):
     async with db.cursor() as cursor:
         raw_result = await cursor.execute(
-            "DELETE FROM members WHERE id = $1 RETURNING subject_id, publisher_id",
+            "DELETE FROM members WHERE id = $1 RETURNING *",
             (member_id,),
         )
 
