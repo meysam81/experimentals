@@ -42,3 +42,8 @@ class PublisherHasBooks(BaseException_):
 class MemberAlreadyExists(BaseException_):
     http_status = HTTPStatus.CONFLICT
     error = "Member already exists"
+
+
+class MemberNotFound(BaseException_):
+    http_status = HTTPStatus.NOT_FOUND
+    error = "Member not found"

@@ -15,6 +15,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from models import (
     BookReader,
+    BookUpdate,
     BookWriter,
     MemberReader,
     MemberWriter,
@@ -72,14 +73,14 @@ class AuthorizationServer:
     async def create_relation_tuple(
         self,
         namespace: str,
-        object_: str,
+        obj: str,
         relation: str,
         subject: SubjectSet | SubjectId,
     ):
         async with httpx.AsyncClient() as client:
             json_ = {
                 "namespace": namespace,
-                "object": object_,
+                "object": obj,
                 "relation": relation,
             }
             if isinstance(subject, SubjectSet):
@@ -96,6 +97,40 @@ class AuthorizationServer:
             method_name = method.__name__.upper()
 
             response = await method(url=url, json=json_)
+
+            logger.info(f"{method_name} {url} {response.status_code}")
+            logger.debug(pformat(response.headers))
+            logger.debug(pformat(response.json()))
+
+            response.raise_for_status()
+
+    async def delete_relation_tuple(
+        self,
+        namespace: str,
+        obj: str,
+        relation: str,
+        subject: SubjectSet | SubjectId,
+    ):
+        async with httpx.AsyncClient() as client:
+            params = {
+                "namespace": namespace,
+                "object": obj,
+                "relation": relation,
+            }
+            if isinstance(subject, SubjectSet):
+                params["subject_set"] = {
+                    "namespace": subject.namespace,
+                    "object": subject.object,
+                    "relation": subject.relation,
+                }
+            else:
+                params["subject_id"] = subject
+
+            url = urljoin(self.write_url, "/admin/relation-tuples")
+            method = client.delete
+            method_name = method.__name__.upper()
+
+            response = await method(url=url, params=params)
 
             logger.info(f"{method_name} {url} {response.status_code}")
             logger.debug(pformat(response.headers))
@@ -173,6 +208,10 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 def get_db():
     return app.state.db
+
+
+def get_authz():
+    return app.state.authz
 
 
 @app.get("/")
@@ -322,6 +361,53 @@ async def create_book(
         raise errors.BookAlreadyExists
 
     return new_book
+
+
+@app.patch("/books/{book_id}")
+async def update_book(
+    book_id: str,
+    book: BookUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+) -> BookReader:
+    async with db.cursor() as cursor:
+        updates = []
+        counter = 1
+        dictionary = book.dict(exclude_unset=True)
+
+        raw_result = await cursor.execute(
+            "SELECT * FROM publishers WHERE id IN (SELECT publisher_id FROM books WHERE id = $1)",
+            (book_id,),
+        )
+
+        publisher = await deserialize_from_db(raw_result)
+
+        if not dictionary:
+            raw_result = await cursor.execute(
+                "SELECT * FROM books WHERE id = $1", (book_id,)
+            )
+            book = await deserialize_from_db(raw_result)
+            book["publisher"] = publisher
+            return book
+
+        for key in dictionary.keys():
+            updates.append(f"{key} = ${counter}")
+            counter += 1
+
+        update_sql = "UPDATE books SET {updates} WHERE id = ${counter} RETURNING id, title, author, year, publisher_id".format(
+            updates=", ".join(updates), counter=counter
+        )
+        raw_result = await cursor.execute(update_sql, (*dictionary.values(), book_id))
+
+        book = await deserialize_from_db(raw_result)
+
+        await db.commit()
+
+    if raw_result.rowcount != 1:
+        raise errors.BookNotFound
+
+    book["publisher"] = publisher
+
+    return book
 
 
 @app.patch("/books", status_code=HTTPStatus.CREATED)
@@ -479,7 +565,9 @@ async def read_members(
 
 @app.post("/members", status_code=HTTPStatus.CREATED)
 async def create_member(
-    member: MemberWriter, db: aiosqlite.Connection = Depends(get_db)
+    member: MemberWriter,
+    db: aiosqlite.Connection = Depends(get_db),
+    authz: AuthorizationServer = Depends(get_authz),
 ) -> MemberReader:
     async with db.cursor() as cursor:
         raw_result = await cursor.execute(
@@ -500,6 +588,13 @@ async def create_member(
 
         await db.commit()
 
+    await authz.create_relation_tuple(
+        namespace=config.MEMBERSHIP_NAMESPACE,
+        subject=new_member.subject_id,
+        obj=new_member.publisher.id,
+        relation=config.MEMBERSHIP_RELATION,
+    )
+
     if result.rowcount != 1:
         raise errors.MemberAlreadyExists
 
@@ -507,15 +602,61 @@ async def create_member(
 
 
 @app.delete("/members", status_code=HTTPStatus.NO_CONTENT)
-async def delete_members(db: aiosqlite.Connection = Depends(get_db)):
+async def delete_members(
+    db: aiosqlite.Connection = Depends(get_db),
+    authz: AuthorizationServer = Depends(get_authz),
+):
     async with db.cursor() as cursor:
-        result = await cursor.execute("DELETE FROM members")
+        raw_result = await cursor.execute(
+            "DELETE FROM members RETURNING subject_id, publisher_id"
+        )
+
+        members = await deserialize_from_db(raw_result, many=True)
 
         await db.commit()
 
-    logger.debug(f"Row count: {result.rowcount}")
-    logger.debug(f"Last row id: {result.lastrowid}")
-    logger.debug(f"Array size {result.arraysize}")
+    for member in members:
+        await authz.delete_relation_tuple(
+            namespace=config.MEMBERSHIP_NAMESPACE,
+            subject=member["subject_id"],
+            obj=member["publisher_id"],
+            relation=config.MEMBERSHIP_RELATION,
+        )
+
+    logger.debug(f"Row count: {raw_result.rowcount}")
+    logger.debug(f"Last row id: {raw_result.lastrowid}")
+    logger.debug(f"Array size {raw_result.arraysize}")
+
+
+@app.delete("/members/{member_id}", status_code=HTTPStatus.NO_CONTENT)
+async def delete_a_member(
+    member_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    authz: AuthorizationServer = Depends(get_authz),
+):
+    async with db.cursor() as cursor:
+        raw_result = await cursor.execute(
+            "DELETE FROM members WHERE id = $1 RETURNING subject_id, publisher_id",
+            (member_id,),
+        )
+
+        member = await deserialize_from_db(raw_result)
+
+        await db.commit()
+
+    if not member:
+        raise errors.MemberNotFound
+
+    await authz.delete_relation_tuple(
+        namespace=config.MEMBERSHIP_NAMESPACE,
+        subject=member["subject_id"],
+        obj=member["publisher_id"],
+        relation=config.MEMBERSHIP_RELATION,
+    )
+
+    logger.debug(f"Row count: {raw_result.rowcount}")
+    logger.debug(f"Last row id: {raw_result.lastrowid}")
+    logger.debug(f"Array size {raw_result.arraysize}")
 
 
 if __name__ == "__main__":

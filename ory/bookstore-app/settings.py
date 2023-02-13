@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     KETO_READ_URL: str = "http://localhost:40720"
     KETO_WRITE_URL: str = "http://localhost:40730"
 
+    MEMBERSHIP_NAMESPACE: str = "memberships"
+    MEMBERSHIP_RELATION: str = "paid"
+
     @property
     def db_extras(self):
         if self.DATABASE_URL.startswith("sqlite"):

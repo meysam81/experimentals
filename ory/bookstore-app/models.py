@@ -39,6 +39,12 @@ class BookReader(BaseBook, IdMixin):
     publisher: PublisherReader
 
 
+class BookUpdate(BaseModel):
+    title: str | None
+    author: str | None
+    year: int | None
+
+
 class BaseMember(BaseModel):
     subject_id: str
 
