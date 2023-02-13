@@ -1,4 +1,4 @@
-dsn: sqlite://./persistent/keto.db?_fk=true
+dsn: sqlite://./persistence/keto.db?_fk=true
 log:
   leak_sensitive_values: true
   level: debug

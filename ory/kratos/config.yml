@@ -1,6 +1,6 @@
 version: v0.11.0
 
-dsn: sqlite://./persistent/kratos.db?_fk=true
+dsn: sqlite://./persistence/kratos.db?_fk=true
 
 serve:
   public:

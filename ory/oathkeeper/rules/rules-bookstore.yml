@@ -38,8 +38,7 @@
     handler: remote
     config:
       headers:
-        X-Subject: "{{ print .Subject }}"
-        X-Email: "{{ print .Extra.identity.traits.email }}"
+        X-Subject: "{{ print .Extra.identity.traits.email }}"
         X-URL: "{{ print .MatchContext.URL }}"
         X-Method: "{{ print .MatchContext.Method }}"
         X-Captured-Groups: "{{ print .MatchContext.RegexpCaptureGroups }}"

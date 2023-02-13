@@ -73,6 +73,8 @@ async def jwks():
 if __name__ == "__main__":
     import uvicorn
 
+    logger.info(f"Listening on {settings.HOST}:{settings.PORT}...")
+
     uvicorn.run(
         "main:app",
         host=settings.HOST,
