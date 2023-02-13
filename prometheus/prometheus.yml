@@ -96,8 +96,8 @@ rule_files:
 tracing:
   endpoint: http://localhost:9411/api/v2/spans
 
-remote_read:
-  - url: http://localhost:9080/api/v1/read
-    remote_timeout: "1m"
-    read_recent: false
-    follow_redirects: true
+# remote_read:
+#   - url: http://localhost:9080/api/v1/read
+#     remote_timeout: "1m"
+#     read_recent: false
+#     follow_redirects: true
