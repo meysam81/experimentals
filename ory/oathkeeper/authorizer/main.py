@@ -2,7 +2,7 @@ from http import HTTPStatus
 from pathlib import Path
 from pprint import pformat
 
-from base_utils import get_logger
+from meysam_utils import get_logger
 from config import settings
 from fastapi import FastAPI, Request, Response
 

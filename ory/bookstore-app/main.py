@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import aiosqlite
 import errors
 import httpx
-from base_utils import get_logger
+from meysam_utils import get_logger
 from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse

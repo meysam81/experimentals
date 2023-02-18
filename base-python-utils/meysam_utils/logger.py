@@ -1,9 +1,12 @@
+import logging
+import sys
+
+
 def get_logger(name=__name__, level="INFO"):
-    import logging
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(sys.stdout)
     sharp = "#" * 80
     formatter = logging.Formatter(
         sharp

@@ -1,6 +1,6 @@
 import json
 
-from base_utils import BaseSettings, LogLevel, root_validator
+from meysam_utils import BaseSettings, LogLevel, root_validator
 
 
 class Settings(BaseSettings):
@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     KRATOS_PUBLIC_URL: str = "http://127.0.0.1:4433"
 
     @root_validator
-    def root_validator_(cls, values):
-        super().root_validator_(values)
+    def validate_settings(cls, values):
+        super().validate_settings(values)
         return values
 
     @property

@@ -1,6 +1,6 @@
 import os
 
-from base_utils import get_logger
+from meysam_utils import get_logger
 from fastapi import FastAPI
 
 logger = get_logger(__name__)

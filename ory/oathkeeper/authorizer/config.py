@@ -1,4 +1,4 @@
-from base_utils import BaseSettings, LogLevel, root_validator
+from meysam_utils import BaseSettings, LogLevel, root_validator
 
 
 class Settings(BaseSettings):

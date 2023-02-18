@@ -1,4 +1,4 @@
-from base_utils import get_logger
+from meysam_utils import get_logger
 
 logger = get_logger(__name__)
 

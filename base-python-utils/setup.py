@@ -1,13 +1,20 @@
 from setuptools import setup
 
+EXTRAS_REQUIRE = {
+    "settings": [
+        "pydantic<2",
+    ],
+}
+
 REQUIRES = []
 
 
 setup(
-    name="base-utils",
+    name="meysam-utils",
     version="0.1.0",
-    description="Simple logger",
-    packages=["base_utils"],
+    description="A set of repetitive utilities that I'm using everywhere with the same code",
+    packages=["meysam_utils"],
     install_requires=REQUIRES,
-    python_requires=">=3.6",
+    extras_require=EXTRAS_REQUIRE,
+    python_requires=">=3.7",
 )

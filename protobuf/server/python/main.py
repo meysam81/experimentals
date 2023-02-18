@@ -4,7 +4,7 @@ from pathlib import Path
 
 # from glob import glob
 from app.config import config
-from base_utils import get_logger
+from meysam_utils import get_logger
 
 logger = get_logger(__name__)
 

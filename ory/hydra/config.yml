@@ -1,0 +1,33 @@
+dsn: sqlite://./persistence/hydra.db?_fk=true
+log:
+  leak_sensitive_values: true
+  level: debug
+oidc:
+  subject_identifiers:
+    pairwise:
+      salt: change_me_if_you_want_to_be_more_secure
+    supported_types:
+      - pairwise
+      - public
+secrets:
+  system:
+    - change_me_if_you_want_to_be_more_secure
+serve:
+  admin:
+    host: localhost
+    request_log:
+      disable_for_health: true
+  cookies:
+    same_site_mode: Lax
+  public:
+    host: localhost
+    request_log:
+      disable_for_health: true
+urls:
+  consent: http://localhost:4455/consent
+  error: http://localhost:4455/error
+  login: http://localhost:4455/oauth2/login
+  logout: http://localhost:4455/logout
+  post_logout_redirect: http://localhost:4455/login
+  self:
+    issuer: http://localhost:41100

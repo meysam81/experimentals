@@ -1,22 +1,25 @@
+import random
+import string
 import time
 from http import HTTPStatus
 from pathlib import Path
-from urllib.parse import urlencode, urljoin
+from pprint import pformat
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 import httpx
-from base_utils import get_logger
-from config import settings
-from fastapi import FastAPI, Request, Response
+from fastapi import Cookie, FastAPI, Header, Query, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from meysam_utils import get_logger
+from settings import settings
 
 HERE = Path(__file__).parent
 STATIC = HERE / "static"
 TEMPLATES = HERE / "templates"
 
-logger = get_logger(__name__)
-app = FastAPI()
+logger = get_logger(__name__, settings.LOG_LEVEL)
+app = FastAPI(title=settings.APP_NAME)
 templates = Jinja2Templates(directory=TEMPLATES)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
@@ -27,6 +30,18 @@ REDIRECT_STATUSES = [
     HTTPStatus.PERMANENT_REDIRECT,
     HTTPStatus.FOUND,
 ]
+
+
+class SessionStore:
+    session_store: dict = {}
+
+    @classmethod
+    def get(cls, key):
+        return cls.session_store.get(key)
+
+    @classmethod
+    def set(cls, key, value):
+        cls.session_store[key] = value
 
 
 @app.middleware("http")
@@ -56,7 +71,7 @@ async def timing_middleware(request: Request, call_next):
 
 @app.get("/error")
 async def error(request: Request):
-    logger.error(request.headers)
+    logger.error(pformat(dict(request.headers)))
     logger.error(await request.body())
     return {"message": "Error"}
 
@@ -67,7 +82,7 @@ async def health():
 
 
 @app.get(
-    "/",
+    settings.INDEX_URI,
     responses={
         HTTPStatus.OK: {
             "description": "The user is already logged in and will gets the session info"
@@ -77,7 +92,7 @@ async def health():
         },
     },
 )
-async def index(request: Request, return_to: str = None):
+async def index(request: Request):
     async with httpx.AsyncClient() as client:
         result = await client.get(
             urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
@@ -91,20 +106,138 @@ async def index(request: Request, return_to: str = None):
     return RedirectResponse(url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER)
 
 
+@app.get(settings.HYDRA_LOGIN_URL, response_class=RedirectResponse)
+async def hydra_login(request: Request, login_challenge: str = None):
+    if not login_challenge:
+        state = "".join(
+            random.choice(string.ascii_letters + string.digits)
+            for _ in range(settings.HYDRA_STATE_LENGTH)
+        )
+        SessionStore.set(state, f"{request.client.host}:{request.client.port}")
+        url = urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_OAUTH2_AUTH_URL)
+        params = {
+            "client_id": settings.HYDRA_CLIENT_ID,
+            "redirect_uri": settings.HYDRA_REDIRECT_URI,
+            "response_type": "code",
+            "state": state,
+        }
+        response = RedirectResponse(url=f"{url}?{urlencode(params)}")
+        for key, value in request.cookies.items():
+            response.set_cookie(key=key, value=value)
+
+        response.set_cookie(settings.HYDRA_FLOW_STATE_COOKIE_NAME, state)
+        return response
+
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.HYDRA_ADMIN_URL, settings.HYDRA_LOGIN_REQUEST_URL),
+            params={"login_challenge": login_challenge},
+            headers={"accept": "application/json"},
+        )
+
+    if result.status_code != HTTPStatus.OK:
+        logger.error(result.text)
+        url = urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_OAUTH2_AUTH_URL)
+        return RedirectResponse(url=url, status_code=HTTPStatus.SEE_OTHER)
+
+    json_ = result.json()
+    if json_["skip"]:
+        async with httpx.AsyncClient() as client:
+            result = await client.put(
+                urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_LOGIN_ACCEPT_URL),
+                params={"login_challenge": login_challenge},
+                headers={"accept": "application/json"},
+            )
+        return RedirectResponse(
+            url=json_["redirect_to"], status_code=HTTPStatus.SEE_OTHER
+        )
+
+    return RedirectResponse(
+        url=settings.LOGIN_URI + f"?login_challenge={login_challenge}",
+        status_code=HTTPStatus.SEE_OTHER,
+    )
+
+
+@app.get(settings.HYDRA_LOGIN_SUBMIT_URL, response_class=RedirectResponse)
+async def hydra_login_callback(
+    request: Request,
+    login_challenge_from_cookie: str = Cookie(
+        "", alias=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME
+    ),
+    location: str = Header("", alias="Location"),
+):
+    async with httpx.AsyncClient() as client:
+        result = await client.get(
+            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    if result.status_code != HTTPStatus.OK:
+        if login_challenge_from_cookie:
+            async with httpx.AsyncClient() as client:
+                logger.info(login_challenge_from_cookie)
+                result = await client.put(
+                    urljoin(settings.HYDRA_ADMIN_URL, settings.HYDRA_LOGIN_REJECT_URL),
+                    params={"login_challenge": login_challenge_from_cookie},
+                    headers={"accept": "application/json"},
+                )
+                logger.info(pformat(dict(result.headers)))
+                logger.info(result.text)
+                return RedirectResponse(
+                    url=result.json()["redirect_to"], status_code=HTTPStatus.SEE_OTHER
+                )
+        return RedirectResponse(
+            url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER
+        )
+
+    if login_challenge_from_cookie:
+        subject = result.json()["identity"]["id"]
+        async with httpx.AsyncClient() as client:
+            result = await client.put(
+                urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_LOGIN_ACCEPT_URL),
+                json={"subject": subject, "remember": True, "remember_for": 0},
+                params={"login_challenge": login_challenge_from_cookie},
+                headers={"accept": "application/json"},
+            )
+        return RedirectResponse(
+            url=result.json()["redirect_to"],
+            status_code=HTTPStatus.SEE_OTHER,
+        )
+
+    return RedirectResponse(
+        url=location or settings.INDEX_URI, status_code=HTTPStatus.SEE_OTHER
+    )
+
+
 @app.get(settings.LOGIN_URI, response_class=HTMLResponse)
-async def login(request: Request, flow: str = None):
+async def login(
+    request: Request,
+    flow: str = None,
+    login_challenge: str = Query(""),
+    login_challenge_from_cookie: str = Cookie(
+        "", alias=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME
+    ),
+):
+    # I have no idea why there's a question mark at the end of the login_challenge
+    hydra_challenge = (login_challenge or login_challenge_from_cookie).rstrip("?")
+
     redirect_url = urljoin(
         settings.KRATOS_PUBLIC_URL,
         settings.KRATOS_LOGIN_BROWSER_URI,
     )
 
     if not flow:
-        return RedirectResponse(
+        response = RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
+        if hydra_challenge:
+            response.set_cookie(
+                key=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME, value=hydra_challenge
+            )
+        return response
 
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -114,14 +247,12 @@ async def login(request: Request, flow: str = None):
             cookies=request.cookies,
         )
 
-    logger.debug(f"{result.status_code} {result.text}")
+    logger.debug(pformat(dict(result.headers)))
 
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
-
-    logger.debug(f"{result.status_code} {result.text}")
 
     json_ = result.json()
 
@@ -144,6 +275,10 @@ async def login(request: Request, flow: str = None):
     action = json_["ui"]["action"]
     method = json_["ui"]["method"]
 
+    # parse the url and the query param stored in `action`
+    parsed_url = urlparse(action)
+    parsed_query = parse_qs(parsed_url.query)
+
     response = templates.TemplateResponse(
         "login.html",
         {
@@ -157,8 +292,12 @@ async def login(request: Request, flow: str = None):
     for cookie, value in request.cookies.items():
         response.set_cookie(cookie, value)
 
+    response.headers["Location"] = urljoin(
+        f"{settings.SCHEME}://{settings.HOST}:{settings.PORT}",
+        settings.HYDRA_LOGIN_SUBMIT_URL,
+    )
     if return_to := json_.get("return_to"):
-        response.headers["Location"] = return_to
+        response.set_cookie(settings.NEXT_LOCATION_COOKIE_NAME, return_to)
 
     return response
 
@@ -177,8 +316,7 @@ async def verification(request: Request, flow: str = None, code: str = ""):
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
 
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -194,7 +332,6 @@ async def verification(request: Request, flow: str = None, code: str = ""):
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
 
-    logger.debug(f"{result.status_code} {result.text}")
     json_ = result.json()
 
     if json_.get("state") == "passed_challenge":
@@ -248,8 +385,7 @@ async def registration(request: Request, flow: str = None):
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
 
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -258,8 +394,6 @@ async def registration(request: Request, flow: str = None):
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
-
-    logger.debug(f"{result.status_code} {result.text}")
 
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
@@ -305,8 +439,7 @@ async def registration(request: Request, flow: str = None):
 
 @app.get(settings.LOGOUT_URI, response_class=HTMLResponse)
 async def logout(request: Request):
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -314,8 +447,6 @@ async def logout(request: Request):
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
-
-    logger.debug(f"{result.status_code} {result.text}")
 
     if result.status_code == HTTPStatus.UNAUTHORIZED:
         return RedirectResponse(url="/", status_code=HTTPStatus.SEE_OTHER)
@@ -347,8 +478,7 @@ async def recovery(request: Request, flow: str = None):
             status_code=HTTPStatus.TEMPORARY_REDIRECT,
         )
 
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -357,8 +487,6 @@ async def recovery(request: Request, flow: str = None):
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
-
-    logger.debug(f"{result.status_code} {result.text}")
 
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
@@ -414,8 +542,7 @@ async def profile(request: Request, flow: str = None):
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
 
-    logger.debug(await request.body())
-    logger.debug(request.headers)
+    logger.debug(pformat(dict(request.headers)))
 
     async with httpx.AsyncClient() as client:
         result = await client.get(
@@ -424,8 +551,6 @@ async def profile(request: Request, flow: str = None):
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
-
-    logger.debug(f"{result.status_code} {result.text}")
 
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(

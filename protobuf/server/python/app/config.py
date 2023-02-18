@@ -1,4 +1,4 @@
-from base_utils import BaseSettings, LogLevel, root_validator
+from meysam_utils import BaseSettings, LogLevel, root_validator
 
 
 class Config(BaseSettings):
@@ -63,8 +63,8 @@ class Config(BaseSettings):
         }
 
     @root_validator
-    def root_validator_(cls, values):
-        super().root_validator_(values)
+    def validate_settings(cls, values):
+        super().validate_settings(values)
 
         if not values["METRICS_PORT"]:
             # get the last two digits of port and append it to 400

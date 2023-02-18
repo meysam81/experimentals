@@ -1,4 +1,4 @@
-from base_utils import BaseSettings, LogLevel
+from meysam_utils import BaseSettings, LogLevel
 
 
 class Settings(BaseSettings):
