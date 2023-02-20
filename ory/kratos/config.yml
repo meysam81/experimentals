@@ -14,8 +14,8 @@ serve:
 selfservice:
   default_browser_return_url: http://127.0.0.1:4457/
   allowed_return_urls:
-    - http://127.0.0.1:4457
-
+    - http://localhost:4455
+    - http://localhost:41200/
   methods:
     password:
       enabled: true
@@ -101,6 +101,8 @@ selfservice:
     login:
       ui_url: http://127.0.0.1:4457/login
       lifespan: 10m
+      after:
+        default_browser_return_url: http://localhost:4455/oauth2/login/callback
       # after:
       #   hooks:
       #   - hook: require_verified_address

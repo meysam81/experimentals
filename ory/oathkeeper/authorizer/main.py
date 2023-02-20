@@ -2,9 +2,9 @@ from http import HTTPStatus
 from pathlib import Path
 from pprint import pformat
 
-from meysam_utils import get_logger
 from config import settings
 from fastapi import FastAPI, Request, Response
+from meysam_utils import get_logger
 
 app = FastAPI()
 

@@ -6,6 +6,8 @@ EXTRAS_REQUIRE = {
     ],
 }
 
+EXTRAS_REQUIRE["all"] = list(set(sum(EXTRAS_REQUIRE.values(), [])))
+
 REQUIRES = []
 
 

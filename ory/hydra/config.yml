@@ -24,7 +24,7 @@ serve:
     request_log:
       disable_for_health: true
 urls:
-  consent: http://localhost:4455/consent
+  consent: http://localhost:4455/oauth2/consent
   error: http://localhost:4455/error
   login: http://localhost:4455/oauth2/login
   logout: http://localhost:4455/logout

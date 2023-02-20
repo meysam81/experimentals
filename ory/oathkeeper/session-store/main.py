@@ -4,9 +4,9 @@ from pathlib import Path
 
 import httpx
 import jwt
-from meysam_utils import get_logger
 from config import settings
 from fastapi import Cookie, FastAPI, Header, Query, Request, Response
+from meysam_utils import get_logger
 
 app = FastAPI()
 

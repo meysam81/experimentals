@@ -1,17 +1,17 @@
-import random
-import string
+import base64
 import time
 from http import HTTPStatus
 from pathlib import Path
 from pprint import pformat
-from urllib.parse import parse_qs, urlencode, urljoin, urlparse
+from urllib.parse import urlencode, urljoin
 
 import httpx
-from fastapi import Cookie, FastAPI, Header, Query, Request, Response
+from cryptography.fernet import Fernet
+from fastapi import Cookie, FastAPI, Form, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from meysam_utils import get_logger
+from meysam_utils import generate_random_string, get_logger
 from settings import settings
 
 HERE = Path(__file__).parent
@@ -32,16 +32,38 @@ REDIRECT_STATUSES = [
 ]
 
 
-class SessionStore:
+class ServerSession:
     session_store: dict = {}
 
     @classmethod
-    def get(cls, key):
+    async def get(cls, key):
         return cls.session_store.get(key)
 
     @classmethod
-    def set(cls, key, value):
+    async def set(cls, key, value):
         cls.session_store[key] = value
+
+    @staticmethod
+    def request_identifier(request: Request) -> str:
+        return f"{request.client.host}:{request.client.port}"
+
+
+class Encyption:
+    def __init__(self, encryption_key: str, encryption_algorithm: str):
+        self.encryption_key = encryption_key
+        self.encryption_algorithm = encryption_algorithm
+        self.fernet = Fernet(base64.urlsafe_b64encode(encryption_key))
+
+    async def encrypt(self, value: str):
+        return self.fernet.encrypt(value.encode()).decode()
+
+    async def decrypt(self, value: str):
+        return self.fernet.decrypt(value.encode()).decode()
+
+
+csrf_encryptor = Encyption(
+    settings.CSRF_ENCRYPTION_KEY, settings.CSRF_ENCRYPTION_ALGORITHM
+)
 
 
 @app.middleware("http")
@@ -69,7 +91,7 @@ async def timing_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/error")
+@app.get(settings.ERROR_URI)
 async def error(request: Request):
     logger.error(pformat(dict(request.headers)))
     logger.error(await request.body())
@@ -106,148 +128,32 @@ async def index(request: Request):
     return RedirectResponse(url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER)
 
 
-@app.get(settings.HYDRA_LOGIN_URL, response_class=RedirectResponse)
-async def hydra_login(request: Request, login_challenge: str = None):
-    if not login_challenge:
-        state = "".join(
-            random.choice(string.ascii_letters + string.digits)
-            for _ in range(settings.HYDRA_STATE_LENGTH)
-        )
-        SessionStore.set(state, f"{request.client.host}:{request.client.port}")
-        url = urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_OAUTH2_AUTH_URL)
-        params = {
-            "client_id": settings.HYDRA_CLIENT_ID,
-            "redirect_uri": settings.HYDRA_REDIRECT_URI,
-            "response_type": "code",
-            "state": state,
-        }
-        response = RedirectResponse(url=f"{url}?{urlencode(params)}")
-        for key, value in request.cookies.items():
-            response.set_cookie(key=key, value=value)
-
-        response.set_cookie(settings.HYDRA_FLOW_STATE_COOKIE_NAME, state)
-        return response
-
-    async with httpx.AsyncClient() as client:
-        result = await client.get(
-            urljoin(settings.HYDRA_ADMIN_URL, settings.HYDRA_LOGIN_REQUEST_URL),
-            params={"login_challenge": login_challenge},
-            headers={"accept": "application/json"},
-        )
-
-    if result.status_code != HTTPStatus.OK:
-        logger.error(result.text)
-        url = urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_OAUTH2_AUTH_URL)
-        return RedirectResponse(url=url, status_code=HTTPStatus.SEE_OTHER)
-
-    json_ = result.json()
-    if json_["skip"]:
-        async with httpx.AsyncClient() as client:
-            result = await client.put(
-                urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_LOGIN_ACCEPT_URL),
-                params={"login_challenge": login_challenge},
-                headers={"accept": "application/json"},
-            )
-        return RedirectResponse(
-            url=json_["redirect_to"], status_code=HTTPStatus.SEE_OTHER
-        )
-
-    return RedirectResponse(
-        url=settings.LOGIN_URI + f"?login_challenge={login_challenge}",
-        status_code=HTTPStatus.SEE_OTHER,
-    )
-
-
-@app.get(settings.HYDRA_LOGIN_SUBMIT_URL, response_class=RedirectResponse)
-async def hydra_login_callback(
-    request: Request,
-    login_challenge_from_cookie: str = Cookie(
-        "", alias=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME
-    ),
-    location: str = Header("", alias="Location"),
-):
-    async with httpx.AsyncClient() as client:
-        result = await client.get(
-            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_WHOAMI_URI),
-            headers={"accept": "application/json"},
-            cookies=request.cookies,
-        )
-
-    if result.status_code != HTTPStatus.OK:
-        if login_challenge_from_cookie:
-            async with httpx.AsyncClient() as client:
-                logger.info(login_challenge_from_cookie)
-                result = await client.put(
-                    urljoin(settings.HYDRA_ADMIN_URL, settings.HYDRA_LOGIN_REJECT_URL),
-                    params={"login_challenge": login_challenge_from_cookie},
-                    headers={"accept": "application/json"},
-                )
-                logger.info(pformat(dict(result.headers)))
-                logger.info(result.text)
-                return RedirectResponse(
-                    url=result.json()["redirect_to"], status_code=HTTPStatus.SEE_OTHER
-                )
-        return RedirectResponse(
-            url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER
-        )
-
-    if login_challenge_from_cookie:
-        subject = result.json()["identity"]["id"]
-        async with httpx.AsyncClient() as client:
-            result = await client.put(
-                urljoin(settings.HYDRA_PUBLIC_URL, settings.HYDRA_LOGIN_ACCEPT_URL),
-                json={"subject": subject, "remember": True, "remember_for": 0},
-                params={"login_challenge": login_challenge_from_cookie},
-                headers={"accept": "application/json"},
-            )
-        return RedirectResponse(
-            url=result.json()["redirect_to"],
-            status_code=HTTPStatus.SEE_OTHER,
-        )
-
-    return RedirectResponse(
-        url=location or settings.INDEX_URI, status_code=HTTPStatus.SEE_OTHER
-    )
-
-
 @app.get(settings.LOGIN_URI, response_class=HTMLResponse)
 async def login(
     request: Request,
     flow: str = None,
-    login_challenge: str = Query(""),
-    login_challenge_from_cookie: str = Cookie(
-        "", alias=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME
-    ),
 ):
-    # I have no idea why there's a question mark at the end of the login_challenge
-    hydra_challenge = (login_challenge or login_challenge_from_cookie).rstrip("?")
-
     redirect_url = urljoin(
         settings.KRATOS_PUBLIC_URL,
         settings.KRATOS_LOGIN_BROWSER_URI,
     )
 
     if not flow:
-        response = RedirectResponse(
+        return RedirectResponse(
             url=redirect_url, status_code=HTTPStatus.TEMPORARY_REDIRECT
         )
-        if hydra_challenge:
-            response.set_cookie(
-                key=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME, value=hydra_challenge
-            )
-        return response
 
-    logger.debug(pformat(dict(request.headers)))
+    logger.info(pformat(dict(request.headers)))
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(base_url=settings.KRATOS_PUBLIC_URL) as client:
         result = await client.get(
-            urljoin(settings.KRATOS_PUBLIC_URL, settings.KRATOS_LOGIN_FLOW_URI),
+            settings.KRATOS_LOGIN_FLOW_URI,
             params={"id": flow},
             headers={"accept": "application/json"},
             cookies=request.cookies,
         )
 
-    logger.debug(pformat(dict(result.headers)))
+    logger.info(pformat(dict(result.headers)))
 
     if result.status_code in [HTTPStatus.NOT_FOUND, HTTPStatus.GONE]:
         return RedirectResponse(
@@ -275,10 +181,6 @@ async def login(
     action = json_["ui"]["action"]
     method = json_["ui"]["method"]
 
-    # parse the url and the query param stored in `action`
-    parsed_url = urlparse(action)
-    parsed_query = parse_qs(parsed_url.query)
-
     response = templates.TemplateResponse(
         "login.html",
         {
@@ -292,14 +194,288 @@ async def login(
     for cookie, value in request.cookies.items():
         response.set_cookie(cookie, value)
 
-    response.headers["Location"] = urljoin(
-        f"{settings.SCHEME}://{settings.HOST}:{settings.PORT}",
-        settings.HYDRA_LOGIN_SUBMIT_URL,
+    return response
+
+
+@app.get(settings.OAUTH2_LOGIN_URI)
+async def oauth2_login(login_challenge: str):
+    """
+    The login logic has already been implemented in settings.LOGIN_URI and we
+    only need to save the login challenge to the cookies and redirect.
+    """
+    response = RedirectResponse(
+        url=settings.LOGIN_URI, status_code=HTTPStatus.SEE_OTHER
     )
-    if return_to := json_.get("return_to"):
-        response.set_cookie(settings.NEXT_LOCATION_COOKIE_NAME, return_to)
+
+    # HACK: I have no idea why there's a question mark at the end
+    login_challenge = login_challenge.rstrip("?")
+
+    response.set_cookie(
+        key=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME, value=login_challenge
+    )
+    return response
+
+
+@app.get(settings.OAUTH2_LOGIN_CALLBACK_URI, response_class=RedirectResponse)
+async def oauth2_login_callback(
+    request: Request,
+    login_challenge: str = Cookie("", alias=settings.HYDRA_LOGIN_CHALLENGE_COOKIE_NAME),
+):
+    if not login_challenge:
+        return RedirectResponse(
+            url=settings.INDEX_URI, status_code=HTTPStatus.SEE_OTHER
+        )
+
+    # get the session from kratos using the cookies from the request
+    async with httpx.AsyncClient(base_url=settings.KRATOS_PUBLIC_URL) as client:
+        session_response = await client.get(
+            settings.KRATOS_WHOAMI_URI,
+            headers={"accept": "application/json"},
+            cookies=request.cookies,
+        )
+
+    logger.info(pformat(dict(session_response.headers)))
+
+    if session_response.status_code == HTTPStatus.OK:
+        # if there is a login_challenge, it's an oauth2 request and we need to
+        # accept the login request and redirect to the url given by the hydra
+
+        async with httpx.AsyncClient(base_url=settings.HYDRA_ADMIN_URL) as client:
+            oauth2_response = await client.put(
+                settings.HYDRA_LOGIN_ACCEPT_URI,
+                params={"login_challenge": login_challenge},
+                json={
+                    "subject": session_response.json()["identity"]["id"],
+                    "remember": settings.OAUTH2_CLIENT_REMEMBER,
+                    "remember_for": settings.OAUTH2_CLIENT_REMEMBER_FOR,
+                },
+                headers={"accept": "application/json"},
+            )
+
+        if oauth2_response.status_code == HTTPStatus.OK:
+            redirect_url = oauth2_response.json()["redirect_to"]
+
+            # HACK: exposing hydra admin & public on localhost needs this
+            redirect_url = redirect_url.replace("41100", "41101", 1)
+
+            return RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
+
+        logger.error(oauth2_response.text)
+        return Response(
+            "error accepting oauth2 login", status_code=HTTPStatus.BAD_REQUEST
+        )
+
+    logger.error(session_response.text)
+    return Response("error getting session", status_code=HTTPStatus.BAD_REQUEST)
+
+
+@app.get(settings.OAUTH2_CONSENT_URI, response_class=HTMLResponse)
+async def oauth2_consent(
+    request: Request,
+    consent_challenge: str,
+):
+    async with httpx.AsyncClient(base_url=settings.HYDRA_ADMIN_URL) as client:
+        consent_response = await client.get(
+            settings.HYDRA_CONSENT_REQUEST_URI,
+            params={"consent_challenge": consent_challenge},
+            headers={"accept": "application/json"},
+        )
+
+    if consent_response.status_code != HTTPStatus.OK:
+        logger.info(pformat(dict(consent_response.headers)))
+        logger.error(consent_response.text)
+        return Response("consent doesn't exist", status_code=HTTPStatus.BAD_REQUEST)
+
+    consent_json = consent_response.json()
+
+    if consent_json["skip"]:
+        async with httpx.AsyncClient(base_url=settings.HYDRA_ADMIN_URL) as client:
+            consent_response = await client.put(
+                settings.HYDRA_CONSENT_ACCEPT_URI,
+                params={"consent_challenge": consent_challenge},
+                json={
+                    "grant_scope": consent_json["requested_scope"],
+                    "remember": settings.OAUTH2_CLIENT_REMEMBER,
+                    "remember_for": settings.OAUTH2_CLIENT_REMEMBER_FOR,
+                },
+                headers={"accept": "application/json"},
+            )
+
+        if consent_response.status_code != HTTPStatus.OK:
+            logger.info(pformat(dict(consent_response.headers)))
+            logger.error(consent_response.text)
+            return Response(
+                "error accepting consent", status_code=HTTPStatus.BAD_REQUEST
+            )
+
+        redirect_url = consent_response.json()["redirect_to"]
+
+        # HACK: exposing hydra admin & public on localhost needs this
+        redirect_url = redirect_url.replace("41100", "41101", 1)
+
+        return RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
+
+    requested_scopes = settings.OAUTH2_CLIENT_SCOPE_COOKIE_DELIMITER.join(
+        consent_json["requested_scope"]
+    )
+
+    inputs = [
+        {
+            "id": scope,
+            "label": scope,
+            "required": False,
+            "type": "checkbox",
+            "value": "on",
+        }
+        for scope in consent_json["requested_scope"]
+    ]
+
+    inputs.extend(
+        [
+            {
+                "id": "approved",
+                "label": "Accept",
+                "required": False,
+                "type": "submit",
+                "value": "true",
+            },
+            {
+                "id": "approved",
+                "label": "Deny",
+                "required": False,
+                "type": "submit",
+                "value": "false",
+            },
+        ],
+    )
+
+    client_name = consent_json["client"]["client_name"]
+
+    # we can put consent-accept url of hydra in the `action`, but for occasions
+    # where the admin page is not exposed to the public, we need to use the
+    # callback url and call the consent-accept endpoint ourselves
+    action = (
+        f"{settings.OAUTH2_CONSENT_CALLBACK_URI}?consent_challenge={consent_challenge}"
+    )
+    method = settings.CONSENT_SUBMIT_METHOD
+
+    csrf_token = generate_random_string(settings.CSRF_TOKEN_LENTGH)
+
+    response = templates.TemplateResponse(
+        "consent.html",
+        {
+            "action": action,
+            "method": method,
+            "csrf_token": await csrf_encryptor.encrypt(csrf_token),
+            "inputs": inputs,
+            "request": request,
+            "client_name": client_name,
+        },
+    )
+    for cookie, value in request.cookies.items():
+        response.set_cookie(cookie, value)
+
+    response.set_cookie(key=settings.CSRF_TOKEN_COOKIE_NAME, value=csrf_token)
+    response.set_cookie(
+        key=settings.OAUTH2_CLIENT_SCOPE_COOKIE_NAME, value=requested_scopes
+    )
 
     return response
+
+
+consent_method = getattr(app, settings.CONSENT_SUBMIT_METHOD.lower())
+
+
+@consent_method(settings.OAUTH2_CONSENT_CALLBACK_URI)
+async def oauth2_consent_callback(
+    request: Request,
+    consent_challenge: str,
+    approved: bool = Form(...),
+    csrf_token: str = Form(...),
+    csrf_token_from_cookie: str = Cookie("", alias=settings.CSRF_TOKEN_COOKIE_NAME),
+    requested_scopes_str: str = Cookie(
+        "", alias=settings.OAUTH2_CLIENT_SCOPE_COOKIE_NAME
+    ),
+):
+    if not csrf_token:
+        return Response("csrf token is missing", status_code=HTTPStatus.BAD_REQUEST)
+
+    if not csrf_token_from_cookie:
+        return Response(
+            "csrf token cookie is missing", status_code=HTTPStatus.BAD_REQUEST
+        )
+
+    if await csrf_encryptor.decrypt(csrf_token) != csrf_token_from_cookie:
+        return Response("csrf token is invalid", status_code=HTTPStatus.BAD_REQUEST)
+
+    if not approved:
+        # reject the request using hydra admin api
+        async with httpx.AsyncClient(base_url=settings.HYDRA_ADMIN_URL) as client:
+            consent_response = await client.put(
+                settings.HYDRA_CONSENT_REJECT_URI,
+                params={"consent_challenge": consent_challenge},
+                json={},
+                headers={"accept": "application/json"},
+            )
+
+        if consent_response.status_code == HTTPStatus.OK:
+            redirect_url = consent_response.json()["redirect_to"]
+
+            response = RedirectResponse(
+                url=redirect_url, status_code=HTTPStatus.SEE_OTHER
+            )
+
+            response.delete_cookie(key=settings.CSRF_TOKEN_COOKIE_NAME)
+            response.delete_cookie(key=settings.OAUTH2_CLIENT_SCOPE_COOKIE_NAME)
+
+            return response
+
+        logger.error(pformat(dict(consent_response.headers)))
+        logger.error(consent_response.text)
+
+        return Response("error rejecting consent", status_code=HTTPStatus.BAD_REQUEST)
+
+    submitted_form = await request.form()
+    requested_scopes = requested_scopes_str.split(
+        settings.OAUTH2_CLIENT_SCOPE_COOKIE_DELIMITER
+    )
+
+    logger.debug(submitted_form)
+
+    accepted_grants = []
+    for key, value in submitted_form.items():
+        if key in requested_scopes and value == "on":
+            accepted_grants.append(key)
+
+    async with httpx.AsyncClient(base_url=settings.HYDRA_ADMIN_URL) as client:
+        consent_response = await client.put(
+            settings.HYDRA_CONSENT_ACCEPT_URI,
+            params={"consent_challenge": consent_challenge},
+            json={
+                "grant_scope": accepted_grants,
+                "remember": settings.OAUTH2_CLIENT_REMEMBER,
+                "remember_for": settings.OAUTH2_CLIENT_REMEMBER_FOR,
+            },
+            headers={"accept": "application/json"},
+        )
+
+    if consent_response.status_code == HTTPStatus.OK:
+        redirect_url = consent_response.json()["redirect_to"]
+
+        # HACK: hydra can't tell admin/public api difference when deployed locally
+        redirect_url = redirect_url.replace("41100", "41101", 1)
+
+        response = RedirectResponse(url=redirect_url, status_code=HTTPStatus.SEE_OTHER)
+
+        response.delete_cookie(key=settings.CSRF_TOKEN_COOKIE_NAME)
+        response.delete_cookie(key=settings.OAUTH2_CLIENT_SCOPE_COOKIE_NAME)
+
+        return response
+
+    logger.error(pformat(dict(consent_response.headers)))
+    logger.error(consent_response.text)
+
+    return Response("error accepting consent", status_code=HTTPStatus.BAD_REQUEST)
 
 
 @app.get(settings.VERIFICATION_URI, response_class=HTMLResponse)
@@ -474,7 +650,7 @@ async def recovery(request: Request, flow: str = None):
     )
     if not flow:
         return RedirectResponse(
-            url=redirect_url + f"?return_to=/login",
+            url=redirect_url + f"?return_to={settings.LOGIN_URI}",
             status_code=HTTPStatus.TEMPORARY_REDIRECT,
         )
 
