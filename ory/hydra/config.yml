@@ -23,6 +23,10 @@ serve:
     host: localhost
     request_log:
       disable_for_health: true
+ttl:
+  access_token: 6h
+  id_token: 24h
+  refresh_token: 720h
 urls:
   consent: http://localhost:4455/oauth2/consent
   error: http://localhost:4455/error

@@ -2,6 +2,7 @@ access_rules:
   matching_strategy: regexp
   repositories:
     - file://./ory/oathkeeper/rules/rules-bookstore.yml
+    - file://./ory/oathkeeper/rules/rules-kratos-client.yml
 authenticators:
   anonymous:
     config:
@@ -17,6 +18,23 @@ authenticators:
       preserve_query: true
       token_from:
         header: authorization
+    enabled: true
+  oauth2_client_credentials:
+    config:
+      required_scope:
+        - openid
+        - offline_access
+      token_url: http://localhost:41100/admin/oauth2/token
+    enabled: true
+  oauth2_introspection:
+    config:
+      introspection_url: http://localhost:41100/admin/oauth2/introspect
+      required_scope:
+        - openid
+        - offline_access
+      cache:
+        enabled: true
+        ttl: 300s
     enabled: true
   cookie_session:
     config:

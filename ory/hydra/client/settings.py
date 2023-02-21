@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     HYDRA_FLOW_REDIRECT_URL: str | None
     HYDRA_CLIENT_ID: str = "change-me"
     HYDRA_CLIENT_SECRET: str = "change-me"
-    HYDRA_FLOW_GRANT_TYPE: list = ["authorization_code", "refresh_token"]
+    HYDRA_FLOW_GRANT_TYPE: str = "authorization_code"
 
     @root_validator(allow_reuse=True)
     def validate_settings(cls, values):

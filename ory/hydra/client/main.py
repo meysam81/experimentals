@@ -174,7 +174,6 @@ async def oauth2_login_callback(
         # "client_id": settings.HYDRA_CLIENT_ID,
         # "client_secret": settings.HYDRA_CLIENT_SECRET,
     }
-    raise Exception("doing on purpose")
     async with httpx.AsyncClient(
         base_url=settings.HYDRA_PUBLIC_URL,
         auth=(settings.HYDRA_CLIENT_ID, settings.HYDRA_CLIENT_SECRET),
