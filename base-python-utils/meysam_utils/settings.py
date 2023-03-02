@@ -20,7 +20,7 @@ class Scheme(str, Enum):
 class BaseSettings(_BaseSettings):
     SCHEME: Scheme = Scheme.HTTP
     HOST: str = "localhost"
-    PORT: int
+    PORT: int | None
     LOG_LEVEL: LogLevel = LogLevel.DEBUG
     DEBUG: bool = True
 
@@ -28,6 +28,7 @@ class BaseSettings(_BaseSettings):
     def validate_settings(cls, values):
         if values["DEBUG"]:
             values["LOG_LEVEL"] = LogLevel.DEBUG
-        values["LOG_LEVEL"] = values["LOG_LEVEL"].value
+        if isinstance(values["LOG_LEVEL"], LogLevel):
+            values["LOG_LEVEL"] = values["LOG_LEVEL"].value
         values["SCHEME"] = values["SCHEME"].value
         return values
