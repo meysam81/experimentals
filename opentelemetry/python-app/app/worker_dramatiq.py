@@ -1,18 +1,14 @@
-import dramatiq
 from app.dramatiq_app import broker
-from app.otel import (
-    RedisInstrumentor,
-    get_meter_provider,
-    get_propagator,
-    get_trace_provider,
-)
+from app.otel import get_meter_provider, get_propagator, get_trace_provider, instrument
 from app.settings import settings
-from dramatiq.brokers.redis import RedisBroker
 from meysam_utils import get_logger
+
+import dramatiq
 
 trace = get_trace_provider(settings.WORKER_DRAMATIQ_NAME).get_tracer(__name__)
 meter = get_meter_provider(settings.WORKER_DRAMATIQ_NAME).get_meter(__name__)
 propagator = get_propagator()
+instrument()
 
 logger = get_logger(__name__)
 
@@ -21,8 +17,6 @@ total_requests = meter.create_counter(
     description="Total requests",
     unit="1",
 )
-
-RedisInstrumentor().instrument()
 
 
 @dramatiq.actor(broker=broker)

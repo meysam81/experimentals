@@ -16,5 +16,19 @@ class Settings(BaseSettings):
     MONGO_DATABASE_NAME: str = "otel"
     OTLP_EXPORTER_ENDPOINT: str = "http://localhost:4317"
 
+    CELERY_INSTRUMENTATION: bool = False
+    DATABASE_API_INSTRUMENTATION: bool = False
+    FASTAPI_INSTRUMENTATION: bool = False
+    FLASK_INSTRUMENTATION: bool = False
+    HTTPX_INSTRUMENTATION: bool = True
+    LOGGING_INSTRUMENTATION: bool = True
+    PYMONGO_INSTRUMENTATION: bool = True
+    REDIS_INSTRUMENTATION: bool = True
+    REQUESTS_INSTRUMENTATION: bool = True
+    SYSTEM_METRICS_INSTRUMENTATION: bool = True
+    URLLIB_INSTRUMENTATION: bool = True
+    URLLIB3_INSTRUMENTATION: bool = True
+    WSGI_INSTRUMENTATION: bool = False
+
 
 settings = Settings()

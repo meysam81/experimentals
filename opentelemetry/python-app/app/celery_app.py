@@ -1,5 +1,3 @@
-import time
-
 import celery
 from app.otel import CeleryInstrumentor
 from app.settings import settings
