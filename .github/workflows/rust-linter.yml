@@ -16,6 +16,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          components: clippy, rustfmt
       # - name: Set up mold
       #   uses: rui314/setup-mold@v1
       - name: Clippy
@@ -23,10 +24,10 @@ jobs:
         with:
           command: clippy
           args: "--all --all-targets -- -D warnings"
-        working-directory: rust
+          working-directory: ./rust
       - name: Format
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: "--all -- --check"
-        working-directory: rust
+          working-directory: ./rust
