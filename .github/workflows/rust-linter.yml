@@ -11,23 +11,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         name: Checkout
+      - name: Cache rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
           components: clippy, rustfmt
-      # - name: Set up mold
-      #   uses: rui314/setup-mold@v1
+      - name: Set up mold
+        uses: rui314/setup-mold@v1
+      - name: Install clang
+        run: |
+          apt update
+          apt install -y clang
       - name: Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: "--all --all-targets -- -D warnings"
-          working-directory: ./rust
+        run: |
+          cd rust
+          cargo clippy --all --all-targets -- -D warnings
       - name: Format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: "--all -- --check"
-          working-directory: ./rust
+        run: |
+          cd rust
+          cargo fmt --all -- --check
