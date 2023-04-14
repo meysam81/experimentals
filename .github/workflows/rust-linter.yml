@@ -23,8 +23,10 @@ jobs:
         with:
           command: clippy
           args: "--all --all-targets -- -D warnings"
+        working-directory: rust
       - name: Format
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: "--all -- --check"
+        working-directory: rust
