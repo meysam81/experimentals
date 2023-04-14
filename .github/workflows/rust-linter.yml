@@ -23,8 +23,8 @@ jobs:
         uses: rui314/setup-mold@v1
       - name: Install clang
         run: |
-          apt update
-          apt install -y clang
+          sudo apt update
+          sudo apt install -y clang
       - name: Clippy
         run: |
           cd rust
