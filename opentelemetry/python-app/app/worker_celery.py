@@ -1,19 +1,13 @@
 from app.celery_app import celery_app as app
 from app.mongo import db
-from app.otel import (
-    RedisInstrumentor,
-    get_meter_provider,
-    get_propagator,
-    get_trace_provider,
-)
+from app.otel import get_meter_provider, get_propagator, get_trace_provider, instrument
 from app.settings import settings
 from meysam_utils import get_logger
-
-RedisInstrumentor().instrument()
 
 tracer = get_trace_provider(settings.WORKER_CELERY_NAME).get_tracer(__name__)
 meter = get_meter_provider(settings.WORKER_CELERY_NAME).get_meter(__name__)
 propagator = get_propagator()
+instrument()
 
 logger = get_logger(__name__, level=settings.LOG_LEVEL)
 

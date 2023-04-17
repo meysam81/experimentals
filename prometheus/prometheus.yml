@@ -28,6 +28,7 @@ scrape_configs:
     file_sd_configs:
       - files:
           - ./targets/prometheus/*.yml
+    scrape_interval: 10s
 
   - job_name: grpc
     file_sd_configs:

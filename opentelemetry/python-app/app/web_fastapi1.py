@@ -7,10 +7,10 @@ from app.dramatiq_app import Message
 from app.dramatiq_app import broker as dramatiq_broker
 from app.otel import (
     FastAPIInstrumentor,
-    RedisInstrumentor,
     get_meter_provider,
     get_propagator,
     get_trace_provider,
+    instrument,
 )
 from app.settings import settings
 
@@ -22,6 +22,7 @@ service_name = settings.WEB_FASTAPI1_NAME
 tracer = get_trace_provider(service_name).get_tracer(__name__)
 meter = get_meter_provider(service_name).get_meter(__name__)
 propagator = get_propagator()
+instrument()
 
 total_requests = meter.create_counter(
     name="total_requests",
@@ -31,7 +32,6 @@ total_requests = meter.create_counter(
 
 
 FastAPIInstrumentor.instrument_app(app)
-RedisInstrumentor().instrument()
 
 
 @app.get("/")

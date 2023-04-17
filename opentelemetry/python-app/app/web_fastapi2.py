@@ -5,10 +5,10 @@ import httpx
 from app.mongo import db
 from app.otel import (
     FastAPIInstrumentor,
-    RedisInstrumentor,
     get_meter_provider,
     get_propagator,
     get_trace_provider,
+    instrument,
 )
 from app.settings import settings
 from fastapi import Request
@@ -21,7 +21,7 @@ service_name = settings.WEB_FASTAPI2_NAME
 tracer = get_trace_provider(service_name).get_tracer(__name__)
 meter = get_meter_provider(service_name).get_meter(__name__)
 propagator = get_propagator()
-
+instrument()
 
 total_requests = meter.create_counter(
     name="total_requests",
@@ -31,7 +31,6 @@ total_requests = meter.create_counter(
 
 
 FastAPIInstrumentor.instrument_app(app)
-RedisInstrumentor().instrument()
 
 
 @app.get("/")
@@ -48,8 +47,6 @@ async def index(request: Request, name: str | None = "World"):
         async with httpx.AsyncClient(base_url="https://httpbin.org") as client:
             response = await client.get("/headers")
             span.set_attribute("httpbin.status_code", response.status_code)
-            binary_headers = response.headers.raw
-            span.set_attribute("httpbin.headers", binary_headers)
 
         return {"message": f"hello {name}"}
 

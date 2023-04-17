@@ -206,3 +206,4 @@ data-agent
 playground.ipynb
 ory/oathkeeper/session-store/keys/*
 persistence
+.actrc

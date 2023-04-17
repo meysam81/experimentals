@@ -1,5 +1,5 @@
-web: opentelemetry-instrument uvicorn --host 0.0.0.0 --port 42000 app.web_fastapi1:app --reload
-web2: opentelemetry-instrument uvicorn --host 0.0.0.0 --port 42100 app.web_fastapi2:app --reload
-web3: opentelemetry-instrument gunicorn -b 0.0.0.0:42200 -w 1 app.web_flask:app --reload
+fastapi1: opentelemetry-instrument uvicorn --host 0.0.0.0 --port 42000 app.web_fastapi1:app --reload
+fastapi2: opentelemetry-instrument uvicorn --host 0.0.0.0 --port 42100 app.web_fastapi2:app --reload
+flask1: opentelemetry-instrument gunicorn -b 0.0.0.0:42200 -w 1 app.web_flask:app --reload
 celery: opentelemetry-instrument watchmedo auto-restart --directory=. --pattern=*.py --recursive -- celery -A app.worker_celery worker --loglevel=info
 dramatiq: opentelemetry-instrument dramatiq app.worker_dramatiq --processes 1 --threads 1 --watch .

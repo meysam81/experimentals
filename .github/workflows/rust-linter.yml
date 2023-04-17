@@ -1,0 +1,35 @@
+name: rust-linter
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout
+      - name: Cache rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Set up mold
+        uses: rui314/setup-mold@v1
+      - name: Install clang
+        run: |
+          sudo apt update
+          sudo apt install -y clang
+      - name: Clippy
+        run: |
+          cd rust
+          cargo clippy --all --all-targets -- -D warnings
+      - name: Format
+        run: |
+          cd rust
+          cargo fmt --all -- --check

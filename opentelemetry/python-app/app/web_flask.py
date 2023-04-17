@@ -1,9 +1,14 @@
-import httpx
 from app.mongo import db
-from app.otel import get_meter_provider, get_propagator, get_trace_provider
+from app.otel import (
+    FlaskInstrumentor,
+    OpenTelemetryMiddleware,
+    get_meter_provider,
+    get_propagator,
+    get_trace_provider,
+    instrument,
+)
 from app.settings import settings
 from flask import Flask, request
-from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 
 tracer_provider = get_trace_provider(settings.WEB_FLASK_NAME)
 meter_provider = get_meter_provider(settings.WEB_FLASK_NAME)
@@ -11,10 +16,12 @@ meter_provider = get_meter_provider(settings.WEB_FLASK_NAME)
 trace = tracer_provider.get_tracer(__name__)
 meter = meter_provider.get_meter(__name__)
 propagator = get_propagator()
+instrument()
 
+FlaskInstrumentor().instrument(enable_commenter=True, commenter_options={})
 app = Flask(__name__)
 app.wsgi_app = OpenTelemetryMiddleware(
-    app.wsgi_app, tracer_provider=tracer_provider, meter_provider=meter_provider
+    app.wsgi_app  # , tracer_provider=tracer_provider, meter_provider=meter_provider
 )
 
 

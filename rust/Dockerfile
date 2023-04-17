@@ -1,12 +1,9 @@
-FROM rust:1 AS builder
-
-WORKDIR /usr/src/myapp
+FROM rust:1.67-alpine as builder
+WORKDIR /opt/helloworld
 COPY . .
+RUN cargo build --release
 
-RUN cargo install --path .
+FROM scratch
+COPY --from=builder /opt/helloworld/target/release/helloworld /opt/helloworld/helloworld
+ENTRYPOINT ["/opt/helloworld/helloworld"]
 
-FROM scratch AS runner
-
-COPY --from=builder /usr/local/cargo/bin/fibo /usr/local/bin/fibo
-
-ENTRYPOINT ["fibo"]
