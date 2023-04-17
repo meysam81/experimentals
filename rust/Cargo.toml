@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "adder",
+    "fibo",
+    "learning",
+    "minigrep",
+]
