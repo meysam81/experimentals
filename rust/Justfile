@@ -1,0 +1,6 @@
+demo:
+  @echo "hello world"
+
+hello-python:
+  #!/usr/bin/env python
+  print('Hello from python!')

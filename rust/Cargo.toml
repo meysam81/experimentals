@@ -1,0 +1,21 @@
+[workspace]
+
+members = [
+    "adder",
+    "fibo",
+    "learning",
+    "minigrep",
+]
+[package]
+name = "helloworld"
+version = "0.1.0"
+edition = "2021"
+default-run = "helloworld"
+
+[[bin]]
+name = "helloworld2"
+path = "bin/myscript.rs"
+
+[dev-dependencies]
+just = "1.13.0"
+

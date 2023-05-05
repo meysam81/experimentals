@@ -28,6 +28,7 @@ scrape_configs:
     file_sd_configs:
       - files:
           - ./targets/prometheus/*.yml
+    scrape_interval: 10s
 
   - job_name: grpc
     file_sd_configs:
@@ -88,6 +89,13 @@ scrape_configs:
           - ./targets/ory/oathkeeper.yml
           - ./targets/ory/kratos.yml
           - ./targets/ory/keto.yml
+
+  - job_name: pushgateway
+    honor_labels: true
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - localhost:9091
 
 rule_files:
   - ./rules/*.alerts.yml
