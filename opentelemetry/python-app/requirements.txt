@@ -7,7 +7,7 @@ opentelemetry-distro==0.37b0
 opentelemetry-exporter-jaeger==1.16.0
 opentelemetry-exporter-otlp==1.16.0
 opentelemetry-exporter-prometheus-remote-write==0.37b0
-opentelemetry-instrumentation==0.37b0
+opentelemetry-instrumentation==0.41b0
 opentelemetry-instrumentation-asgi==0.37b0
 opentelemetry-instrumentation-celery==0.37b0
 opentelemetry-instrumentation-fastapi==0.37b0
