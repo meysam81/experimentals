@@ -53,6 +53,7 @@ class Person(_message.Message):
         def __init__(
             self, key: _Optional[str] = ..., value: _Optional[_Union[Value, str]] = ...
         ) -> None: ...
+
     EMAIL_FIELD_NUMBER: _ClassVar[int]
     EXTRA_FIELD_NUMBER: _ClassVar[int]
     GENDER_FIELD_NUMBER: _ClassVar[int]
