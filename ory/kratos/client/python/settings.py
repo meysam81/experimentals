@@ -70,9 +70,9 @@ class Settings(BaseSettings):
         super().validate_settings(values)
 
         if not values["APP_FULL_HOST"]:
-            values[
-                "APP_FULL_HOST"
-            ] = f"{values['SCHEME']}://{values['HOST']}:{values['PORT']}"
+            values["APP_FULL_HOST"] = (
+                f"{values['SCHEME']}://{values['HOST']}:{values['PORT']}"
+            )
 
         if not values["CSRF_ENCRYPTION_KEY"]:
             key_path = Path(values["CSRF_ENCRYPTION_KEY_PATH"])
