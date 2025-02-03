@@ -5,9 +5,9 @@ repos:
           - black
         id: isort
         stages:
-          - commit
+          - pre-commit
     repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 6.0.0
   - hooks:
       - args:
           - "-ri"
@@ -17,12 +17,12 @@ repos:
           - "--remove-unused-variables"
         id: autoflake
         stages:
-          - commit
+          - pre-commit
     repo: https://github.com/PyCQA/autoflake
     rev: v2.3.1
   - hooks:
       - id: black
         stages:
-          - commit
+          - pre-commit
     repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 25.1.0
