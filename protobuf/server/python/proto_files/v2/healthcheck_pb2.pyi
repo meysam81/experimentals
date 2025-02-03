@@ -19,6 +19,7 @@ class HealthCheckResponse(_message.Message):
 
     class ServingStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = []
+
     NOT_SERVING: HealthCheckResponse.ServingStatus
     SERVICE_UNKNOWN: HealthCheckResponse.ServingStatus
     SERVING: HealthCheckResponse.ServingStatus

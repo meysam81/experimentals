@@ -67,9 +67,9 @@ class Settings(BaseSettings):
             values["COOKIE_ENCRYPTION_KEY"] = cookie_key.encode()
 
         if not values["APP_FULL_HOST"]:
-            values[
-                "APP_FULL_HOST"
-            ] = f"{values['SCHEME']}://{values['HOST']}:{values['PORT']}"
+            values["APP_FULL_HOST"] = (
+                f"{values['SCHEME']}://{values['HOST']}:{values['PORT']}"
+            )
 
         if not values["HYDRA_FLOW_REDIRECT_URL"]:
             values["HYDRA_FLOW_REDIRECT_URL"] = urljoin(
